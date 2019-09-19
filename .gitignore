@@ -2,4 +2,5 @@
 .vscode/
 !.gitignore
 !*.c
+!*.cpp
 !README.md
