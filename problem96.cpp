@@ -47,19 +47,19 @@ int main(){
                         sum[curr][j]=(sum[curr][j]+sum[curr][j-1])%MOD;
                     if(dp[curr][j]==dp[prev][j])
                         sum[curr][j]=(sum[curr][j]+sum[prev][j])%MOD;
-                    if(dp[curr][j]==dp[prev][j-1])
-                        sum[curr][j]=(sum[curr][j]-sum[prev][j-1]+MOD)%MOD;
+                    if(dp[curr][j]==dp[prev][j-1]){
+                        sum[curr][j]=sum[curr][j]-sum[prev][j-1];
+                        while(sum[curr][j]<0)
+                            sum[curr][j]+=MOD;
+                    }
                 }
             }
-            for(int tmp=0;tmp<=yl;tmp++)
-                cout<<dp[curr][tmp]<<':'<<sum[curr][tmp]<<' ';
-            cout<<endl;
         }
         cout<<dp[xl&1][yl]<<endl;
         if(dp[xl&1][yl]==0)
             cout<<0<<endl;
         else
-            cout<<sum[xl&1][yl]<<endl;
+            cout<<(sum[xl&1][yl]+MOD)%MOD<<endl;
         for(int i=0;i<2;i++)
         {
             delete[] * (dp + i);
