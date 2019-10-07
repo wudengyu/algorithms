@@ -3,65 +3,60 @@
 */
 #include <iostream>
 #include <cstring>
-#define line 60001
 #define MOD 100000000
 using namespace std;
-int main()
-{
-    string x, y;
-    int *dp[2], *s[2];
-    while (!getline(cin, x).eof() && !getline(cin, y).eof())
+int main(){
+    string x,y;
+    while(!getline(cin,x).eof()&&!getline(cin, y).eof())
     {
-        int xl = x.length() - 1;
-        int yl = y.length() - 1;
-        x = ' ' + x;
-        y = ' ' + y;
-        for (int i = 0; i < 2; i++)
-        {
-            *(dp + i) = new int[yl + 1];
-            *(s + i) = new int[yl + 1];
+        int xl=x.length()-1;
+        int yl=y.length()-1;
+        x=' '+x;
+        y=' '+y;
+        int **dp=new int*[xl+1];
+        int **sum=new int*[xl+1];
+        for(int i=0;i<2;i++){
+            dp[i]=new int[yl+1];
+            sum[i]=new int[yl+1];
         }
-        for (int i = 0; i < 2; i++)
-        {
-            for (int j = 0; j <= yl; j++)
-            {
-                dp[i][j] = 0;
-                s[i][j] = 1;
-            }
+        for(int i=0;i<=xl;i++){
+            dp[i][0]=0;
+            sum[i][0]=1;
         }
-        for (int i = 1; i <= xl; i++)
-        {
-            int cu = i & 1, pr = cu ^ 1;
-            for (int j = 1; j <= yl; j++)
-            {
-                if (x[i] == y[j])
-                    dp[cu][j] = dp[pr][j - 1] + 1;
+        for(int j=0;j<=yl;j++){
+            dp[0][j]=0;
+            sum[0][j]=1;
+        }
+        for(int i=1;i<=xl;i++){
+            for(int j=1;j<=yl;j++){
+                if (x[i]==y[j])
+                    dp[i][j]=dp[i-1][j-1]+1;
+                    sum[i][j]=sum[i-1][j-1];
+                    if(dp[i][j]==dp[i][j-1])
+                        sum[i][j]=(sum[i][j]+sum[i][j-1])%MOD;
+                    if(dp[i][j]==dp[i-1][j])
+                        sum[i][j]=(sum[i][j]+sum[i-1][j])%MOD;
                 else
-                    dp[cu][j] = max(dp[pr][j], dp[cu][j - 1]);
-                s[cu][j] = 0;
-                if (dp[cu][j] == dp[pr][j])
-                    s[cu][j] += s[pr][j];
-                if (dp[cu][j] == dp[cu][j - 1])
-                    s[cu][j] += s[cu][j - 1];
-                if (dp[cu][j] == dp[pr][j] && dp[cu][j] == dp[cu][j - 1] && dp[pr][j - 1] == dp[cu][j])
-                    s[cu][j] -= s[pr][j - 1];
-                if (x[i] == y[j] && dp[cu][j] == dp[pr][j - 1] + 1)
-                    s[cu][j] += s[pr][j - 1];
-                if (s[cu][j] > MOD)
-                    s[cu][j] %= MOD;
-                if (s[cu][j] < 0)
-                    s[cu][j] = (s[cu][j] % MOD) + MOD;
+                    dp[i][j]=max(dp[i-1][j], dp[i][j-1]);
+                    if(dp[i][j]==dp[i][j-1])
+                        sum[i][j]=(sum[i][j]+sum[i][j-1])%MOD;
+                    if(dp[i][j]==dp[i-1][j])
+                        sum[i][j]=(sum[i][j]+sum[i-1][j])%MOD;
+                    if(dp[i][j]==dp[i-1][j-1])
+                        sum[i][j]=(sum[i][j]-sum[i-1][j]+MOD)%MOD;
             }
         }
-        cout << dp[xl & 1][yl] << endl;
-        if (dp[xl & 1][yl] == 0)
-            cout << 0 << endl;
+        cout<<dp[xl][yl]<<endl;
+        if(dp[xl][yl]==0)
+            cout<<0<<endl;
         else
-            cout << s[xl & 1][yl] << endl;
-        for (int i = 0; i < 2; i++)
+            cout<<sum[xl][yl]<<endl;
+        for(int i=0;i<xl;i++)
         {
             delete[] * (dp + i);
-            delete[] * (s + i);
+            delete[] * (sum + i);
         }
+        delete[] dp;
+        delete[] sum;
     }
 }
