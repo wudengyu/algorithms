@@ -1,15 +1,20 @@
 #include <iostream>
 #include <string>
 #include <typeinfo>
+#include <cstdio>
 using namespace std;
 int main(){
-    string a="ABCDE";
-    string b="BCEFAB";
     cout<<"Hello World!"<<endl;
-    cout<<typeid(a[1]).name()<<a.max_size()<<endl;
-    cout<<(a[1]==b[0])<<endl;
-    cout<<(-2+100)%100<<endl;
-    cout<<(-2+200)%100<<endl;
-    cout<<dec<<((unsigned)(-1)>>1)<<endl;
-
+    string a;
+    char b[100000];
+    while(!getline(cin,a).eof()){
+        //a=' '+a;
+        a.copy(b+1,a.length(),0);
+        b[a.length()+1]='\0';
+        cout<<"string length:"<<a.length()<<endl;
+        cout<<"char[] length:"<<strlen(b)<<endl;
+        for(int i=0;i<=a.length();i++)
+            if(a[i]!=b[i])
+                cout<<a[i];
+    }
 }
