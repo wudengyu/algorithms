@@ -11,12 +11,11 @@ void MATRIX_CHAIN_ORDER(int *p,int length,int dp[][M],int s[][M]){
         for(int i=1;i<=n-l+1;i++){
             int j=i+l-1;//计算区间[i,j]的最小花费。
             dp[i][j]=INT_MAX;
-            for(int k=i;k<=j-l;k++){//k是分割点
+            for(int k=i;k<=j-1;k++){//k是分割点
 		        q=dp[i][k]+dp[k+1][j]+p[i-1]*p[k]*p[j];
 		        if(q<dp[i][j]){
 		            dp[i][j]=q;
 		            s[i][j]=k;
-                    cout<<"dp["<<i<<"]["<<j<<"]="<<q<<endl;
 		        }
 		    }
         }
@@ -39,8 +38,8 @@ int main(){
             cin>>p[i];
             dp[i][i]=0;//初始化
         }
-        MATRIX_CHAIN_ORDER(p,N,dp,s);
-        //PRINT_OPTIMAL_PARENS(s,1,N);
+        MATRIX_CHAIN_ORDER(p,N+1,dp,s);
+        PRINT_OPTIMAL_PARENS(s,1,N);
     }
     return 0;
 }
