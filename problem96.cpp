@@ -21,6 +21,10 @@ int main(){
         for(int i=0;i<2;i++){
             dp[i]=new int[n+1];
             sum[i]=new int[n+1];
+            for(int j=0;j<=n;j++){
+                dp[i][j]=0;
+                sum[i][j]=0;
+            }
         }
         for(int i=0;i<=n;i++){
             sum[0][i]=1;
