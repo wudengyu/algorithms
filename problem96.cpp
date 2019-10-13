@@ -12,12 +12,6 @@ int main(){
     while(scanf("%s%s",x+1,y+1)!=EOF){
         int m=strlen(x+1)-1;
         int n=strlen(y+1)-1;
-        for(int i=1;i<=m;i++)
-            if(x[i]>='a'&&x[i]<='z')
-                x[i]-=32;
-        for(int i=1;i<=n;i++)
-            if(y[i]>='a'&&y[i]<='z')
-                y[i]-=32;
         for(int i=0;i<2;i++){
             dp[i]=new int[n+1];
             sum[i]=new int[n+1];
