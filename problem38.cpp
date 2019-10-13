@@ -3,70 +3,61 @@
 #include<queue>
 #include<math.h>
 using namespace std;
-typedef long long ll;
-int length;
-void MIN_HEAPIFY(int A[],int i)
-{
+const int INTMAX=((unsigned)-1)>>1;
+void min_heapify(int a[],int length,int i){
     int l=2*i,r=2*i+1,min,temp;
-    if(l<=length && A[i]>A[l])
-        min = l;
+    if(l<=length&&a[i]>a[l])
+        min=l;
     else
-        min =i;
-    if(r<=length && A[min]>A[r])
+        min=i;
+    if(r<=length&&a[min]>a[r])
         min = r;
-    if(min != i)
-    {
-        temp=A[i];
-        A[i]=A[min];
-        A[min]=temp;
-        MIN_HEAPIFY(A,min);
+    if(min!=i){
+        temp=a[i];
+        a[i]=a[min];
+        a[min]=temp;
+        min_heapify(a,length,min);
     }
 }
-void build_min_heap(int A[])
-{
-    for(int i=(int)floor(length/2); i>=1; i--)
-    {
-        MIN_HEAPIFY(A,i);
-    }
+void build_min_heap(int a[],int length){
+    for(int i=length/2;i>=1;i--)
+        min_heapify(a,length,i);
 }
-int heapsort(int A[])
+int heapsort(int a[],int length)
 {
-    int B[3]= {0};
-    build_min_heap(A);
-    while(1)
-    {
-        for(int i=1; i<=2; i++)
-        {
-            int temp=A[1];
-            A[1]=A[length];
-            A[length]=temp;
-            B[i]=A[length];
+    int b[3]= {0};
+    build_min_heap(a,length);
+    while(1){
+        for(int i=1;i<=2;i++){
+            int temp=a[1];
+            a[1]=a[length];
+            a[length]=temp;
+            b[i]=a[length];
             length--;
-            MIN_HEAPIFY(A,1);
+            min_heapify(a,length,1);
         }
-        B[0] += B[1]+B[2];
-        if(length == 0)
+        b[0]+=b[1]+b[2];
+        if(length==0)
             break;
         length++;
-        A[length]=B[1]+B[2];
-        for(int i=length; i>1 && A[i]<A[(int)floor(i/2)]; i=floor(i/2))
-        {
-            int temp=A[i];
-            A[i]=A[(int)floor(i/2)];
-            A[(int)floor(i/2)]=temp;
+        a[length]=b[1]+b[2];
+        for(int i=length;i>1&&a[i]<a[i/2];i/=2){
+            int temp=a[i];
+            a[i]=a[i/2];
+            a[i/2]=temp;
         }
     }
-    return B[0];
-
+    return b[0];
 }
-int main()
-{
-    cin >> length;
-    int A[length+1];
-    for(int i=1; i<=length; i++)
-        cin >> A[i];
-    cout << heapsort(A) << endl;
-
+int main(){
+    int n,*a;
+    while(!(cin>>n).eof()){
+        a=new int[n+1];
+        for(int i=1;i<=n;i++)
+            cin>>a[i];
+        cout<<heapsort(a,n)<<endl;
+        delete[] a;
+    }
     return 0;
 }
   

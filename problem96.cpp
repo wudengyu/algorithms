@@ -6,21 +6,16 @@
 #include <cstdio>
 #define mod 100000000
 using namespace std;
-char x[400000005],y[400000005];
-int *dp[2],*sum[2];
+const int N=10000005;
+char x[N],y[N];
+int dp[2][N],sum[2][N];
 int main(){
     while(scanf("%s%s",x+1,y+1)!=EOF){
         int m=strlen(x+1)-1;
         int n=strlen(y+1)-1;
-        for(int i=0;i<2;i++){
-            dp[i]=new int[n+1];
-            sum[i]=new int[n+1];
-            for(int j=0;j<=n;j++){
-                dp[i][j]=0;
-                sum[i][j]=0;
-            }
-        }
         for(int i=0;i<=n;i++){
+            dp[0][i]=0;
+            dp[1][i]=0;
             sum[0][i]=1;
         }
         sum[1][0]=1;
@@ -46,9 +41,5 @@ int main(){
         }
         cout<<dp[m&1][n]<<endl;
         cout<<sum[m&1][n]<<endl;
-        for(int i=0;i<2;i++){
-            delete[] dp[i];
-            delete[] sum[i];
-        }
     }
 }
