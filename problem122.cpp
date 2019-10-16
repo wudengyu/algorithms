@@ -7,6 +7,10 @@
 using namespace std;
 int dp[30001];
 int V,N;//背包容量、物体种类数
+struct {
+    int value;
+    int pos;
+}que[30001];
 void CompletePack(int w,int v){
     for(int i=w;i<=V;i++)
         if(dp[i]<dp[i-w]+v)
@@ -44,11 +48,11 @@ int main(){
                 for(int k=0;k<=(V-r)/w;k++){
                     int x=k;
                     int y=dp[k*w+r]-k*v;
-                    while(head<tail && que[head].pos<k-num)head++;//限制长度
-                    while(head<tail && que[tail-1].value<=y)tail--;
+                    while(head<tail&&que[head].pos<k-m)head++;//限制长度
+                    while(head<tail&&que[tail-1].value<=y)tail--;
                     que[tail].value=y,que[tail].pos=x;
                     tail++;
-                    dp[k*v+r]=que[head].value+k*v;
+                    dp[k*w+r]=que[head].value+k*v;
                 }
             }
         }
