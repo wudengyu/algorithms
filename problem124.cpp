@@ -4,35 +4,56 @@
 using namespace std;
 const int MAX_STATUS=1<<10;
 struct{
-    short status;
-    short count;
-}row[MAX_STATUS];//用于记录有效的行
-int dp[102][60][60];//dp[i][j][k]表示当前行i，上一行第j个状态，上上一行第k个状态的解，10位宽最多有60种状态。
+    int status;
+    int count;
+}row[60];//用于记录有效的行，60是先调用一次solve_row算出来10位宽最多方案数。
+int dp[102][60][60];//dp[i][j][k]表示当前行i，当前行状态编号，上一行状态编号对应的数量。
+int solve_row(int wide){
+    int scheme=0;
+    for(int i=0;i<1<<wide;i++){
+        if(!((i<<1)&i||(i<<2)&i)){
+            row[scheme].status=i;
+            for(int j=1;j<=row[scheme].status;j<<=1)
+                if(row[scheme].status&j)
+                    row[scheme].count++;
+            scheme++;
+        }
+    }
+    return scheme;
+}
 int main(){
     int n,m;
+    int max_scheme,max_scheme_count;
     while(!(cin>>n>>m).eof()){
         memset(dp,0,sizeof(dp));
-        int row_status_count=0;//有效状态行的数量
-        for(int i=0;i<1<<m;i++){
-            if(!((i<<1)&i||(i<<2)&i)){
-                row[row_status_count].status=i;
-                for(int j=1;j<=row[row_status_count].status;j<<=1)
-                    if(row[row_status_count].status&j)
-                        row[row_status_count].count++;
-                row_status_count++;
-            }
-        }
+        memset(row,0,sizeof(row));
+        int row_status_count=solve_row(m);//有效状态行的数量
         for(int i=2;i<n+2;i++){
-            int jie=-1;
             for(int j=0;j<row_status_count;j++){
                 for(int k=0;k<row_status_count;k++){
-                    if(dp[i-1])
-
+                    if(row[j].status&row[k].status)continue;
+                    for(int l=0;l<row_status_count;l++){
+                        if(row[j].status&row[l].status)continue;
+                        if(row[k].status&row[l].status)continue;
+                        if(dp[i][j][k]<dp[i-1][k][l]+row[j].count)
+                            dp[i][j][k]=dp[i-1][k][l]+row[j].count;
+                    }
                 }
             }
         }
-
-
-
+        max_scheme=0,max_scheme_count=0;
+        for(int j=0;j<row_status_count;j++){
+            for(int k=0;k<row_status_count;k++){
+                cout<<dp[n+1][j][k]<<' ';
+                if(dp[n+1][j][k]>max_scheme){
+                    max_scheme=dp[n+1][j][k];
+                    max_scheme_count=1;
+                }else if(dp[n+1][j][k]==max_scheme){
+                    max_scheme_count++;
+                }
+            }
+            cout<<endl;
+        }
+        cout<<max_scheme<<' '<<max_scheme_count<<endl;
     }
 }
