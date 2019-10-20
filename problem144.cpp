@@ -45,7 +45,7 @@ void Box::fill(int x,int y,int side){
 }
 int Box::explore(int x,int y,int side){
     int status=0;
-    if(x+side>=size||y+side>=size){
+    if(x+side>size||y+side>size){
         status|=impossible;
         return status;
     }
@@ -59,11 +59,11 @@ int Box::explore(int x,int y,int side){
             }
             if(i==x&&(i==0||space[i-1][j]))
                 status|=margin_top;//上边不为空
-            if(i==x+side&&(i==size||space[i+1][j]))
+            if(i==x+side-1&&(i==size-1||space[i+1][j]))
                 status|=margin_bottom;//下边不为空
             if(j==y&&(j==0||space[i][j-1]))
                 status|=margin_left;//左边不为空
-            if(j==y+side&&(j==size||space[i][j+1]))
+            if(j==y+side-1&&(j==size-1||space[i][j+1]))
                 status|=margin_right;//右边不为空
         }
         if(status&impossible)
@@ -106,7 +106,7 @@ int Box::lay(int shape[],int length,int total){
     this->count=0;
     while(total>0){
         this->reset();
-        int finger=length;
+        int finger=length-1;
         while(finger>=0){
             if(shape[finger]&&lay(finger+1)){
                 shape[finger]--;
