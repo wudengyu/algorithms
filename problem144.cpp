@@ -9,6 +9,7 @@ int baskets[8][6]={{0,0,0,0,0,1},{11,0,0,0,1,0},{0,5,0,1,0},{0,0,4,0},
 int main(){
     int h[6];
     int use[8];
+    int sum=0;
     while(true){
         for(int i=0;i<6;i++){
             if((cin>>h[i]).eof())
@@ -22,6 +23,10 @@ int main(){
         for(int i=0;i<4;i++){
             for(int j=0;j<6;j++)
                 h[j]-=baskets[i][j]*use[i];
+        }
+        if(h[1]<0){
+            h[0]-=-h[1]*4;
+            h[1]=0;
         }
         if(h[2]==3){
             use[3]++;
@@ -53,9 +58,26 @@ int main(){
             }
         }
         if(h[1]>0){
-            use[6]=h[1]/9+1;
-            h[0]-=h[1]/9
-            h[1]-=h[1]/9
+            use[6]=h[1]/9;
+            h[1]%=9;
+            if(h[1]>0){
+                use[6]++;
+                h[0]-=36-4*h[1];
+                h[1]=0;
+            }
         }
-    }
+        if(h[0]>0){
+            use[7]=h[0]/36;
+            h[0]%=36;
+            if(h[0]>0)
+                use[7]++;
+        }
+        sum=0;
+        for(int i=0;i<8;i++){
+            sum+=use[i];
+            cout<<use[i]<<' ';
+        }
+        cout<<endl;
+        cout<<sum<<endl;
+        }
 }
