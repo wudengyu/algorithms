@@ -4,129 +4,58 @@
 #include <iostream>
 #include <cstring>
 using namespace std;
-struct coordinates{
-    int x;
-    int y;
-};
-enum{
-    margin_top=0x1,
-    margin_right=0x2,
-    margin_bottom=0x4,
-    margin_left=0x8,
-    impossible=0x10,
-    first=0x20
-};
-class Box{
-    private:
-    int space[6][6];
-    int size;
-    int count;
-    public:
-    Box();
-    void reset();
-    void fill(int x,int y,int side);
-    int explore(int x,int y,int side);
-    bool lay(int side);
-    int lay(int shape[],int length,int total);
-};
-Box::Box(){
-    size=6;
-}
-void Box::reset(){
-    for(int i=0;i<size;i++)
-        for(int j=0;j<size;j++)
-            space[i][j]=0;
-    count++;
-}
-void Box::fill(int x,int y,int side){
-    for(int i=x;i<x+side;i++)
-        for(int j=y;j<y+side;j++)
-            space[i][j]=side;
-}
-int Box::explore(int x,int y,int side){
-    int status=0;
-    if(x+side>size||y+side>size){
-        status|=impossible;
-        return status;
-    }
-    if(x==0&&y==0)
-        status|=first;
-    for(int i=x;i<x+side;i++){
-        for(int j=y;j<y+side;j++){
-            if(space[i][j]){
-                status|=impossible;
-                break;
-            }
-            if(i==x&&(i==0||space[i-1][j]))
-                status|=margin_top;//上边不为空
-            if(i==x+side-1&&(i==size-1||space[i+1][j]))
-                status|=margin_bottom;//下边不为空
-            if(j==y&&(j==0||space[i][j-1]))
-                status|=margin_left;//左边不为空
-            if(j==y+side-1&&(j==size-1||space[i][j+1]))
-                status|=margin_right;//右边不为空
-        }
-        if(status&impossible)
-            break;
-    }
-    return status;
-}
-bool Box::lay(int side){
-    int last_x,last_y,last_status=impossible;
-    int status;
-    int border;
-    for(int i=0;i<size;i++){
-        for(int j=0;j<size;j++){
-            if(!space[i][j]){
-                status=explore(i,j,side);
-                if(status&impossible)
-                    continue;
-                last_x=i;
-                last_y=j;
-                last_status=status;
-                border=0;
-                for(int k=1;k<0x10;k<<=1){
-                    if(status&k)
-                        border++;
-                }
-                if(status&first||border>=3){
-                    fill(i,j,side);
-                    return true;
-                }
-            }
-        }
-    }
-    if(!(last_status&impossible)){
-        fill(last_x,last_y,side);
-        return true;
-    }
-    return false;
-}
-int Box::lay(int shape[],int length,int total){
-    this->count=0;
-    while(total>0){
-        this->reset();
-        int finger=length-1;
-        while(finger>=0){
-            if(shape[finger]&&lay(finger+1)){
-                shape[finger]--;
-                total--;
-            }else
-                finger--;
-        }
-    }
-    return this->count;
-}
+int baskets[8][6]={{0,0,0,0,0,1},{11,0,0,0,1,0},{0,5,0,1,0},{0,0,4,0},
+    {6,3,2,0},{7,5,1,0},{0,9,0},{36,0}};
 int main(){
-    int h[6],total;
-    Box b=Box();
+    int h[6];
+    int use[8];
     while(true){
-        total=0;
         for(int i=0;i<6;i++){
             if((cin>>h[i]).eof())
                 return 0;
-            total+=h[i];
         }
-        cout<<b.lay(h,6,total)<<endl;
+        memset(use,0,sizeof(use));
+        use[0]=h[5];
+        use[1]=h[4];
+        use[2]=h[3];
+        use[3]=h[2]/4;
+        for(int i=0;i<4;i++){
+            for(int j=0;j<6;j++)
+                h[j]-=baskets[i][j]*use[i];
+        }
+        if(h[2]==3){
+            use[3]++;
+            h[2]=0;
+            if(h[1]>0){
+                h[1]-=1;
+                h[0]-=3;
+            }else
+                h[0]-=9;
+        }else if(h[2]==2){
+            use[4]++;
+            h[2]=0;
+            if(h[1]>=3){
+                h[1]-=3;
+                h[0]-=6;
+            }else{
+                h[0]=h[0]-6-(3-h[1])*4;
+                h[1]=0;
+            }
+        }else if(h[2]==1){
+            use[5]++;
+            h[2]=0;
+            if(h[1]>=5){
+                h[1]-=5;
+                h[0]-=7;
+            }else{
+                h[0]=h[0]-7-(5-h[1])*4;
+                h[1]=0;
+            }
+        }
+        if(h[1]>0){
+            use[6]=h[1]/9+1;
+            h[0]-=h[1]/9
+            h[1]-=h[1]/9
+        }
     }
 }
