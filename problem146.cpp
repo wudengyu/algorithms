@@ -13,6 +13,19 @@ struct Node{
         return a.freq>b.freq;
     }
 };
+int length(Node* t,int dept){
+    int sum=0;
+    if(t->left==nullptr&&t->right==nullptr){
+        return t->freq*dept;
+    }
+    if(t->left!=nullptr){
+        sum+=length(t->left,dept+1);
+    }
+    if(t->right!=nullptr){
+        sum+=length(t->right,dept+1);
+    }
+    return sum;
+}
 int alphabet[52];
 int main(){
     int t;
@@ -22,8 +35,7 @@ int main(){
         char c;
         Node tmp,*root;
         priority_queue<Node> q;
-        cout<<q.size();   
-        cin.ignore();
+        cin.ignore('\n');
         while((c=cin.get())!='\n'){
             if(c>='A'&&c<='Z')
                 alphabet[c-'A']++;
@@ -36,24 +48,30 @@ int main(){
                 tmp.left=nullptr;
                 tmp.right=nullptr;
                 q.push(tmp);
+                if(i<26)
+                    cout<<(char)(i+'A')<<':'<<alphabet[i]<<endl;
+                else
+                {
+                    cout<<(char)(i-26+'a')<<':'<<alphabet[i]<<endl;
+                }
+                
             }
         }
         while(q.size()>1){
-            Node* r=new Node;
             Node* l=new Node;
             Node* r=new Node;
             *l=q.top();
             q.pop();
             *r=q.top();
             q.pop();
-            r->left=l;
-            r->right=r;
-            r->freq=l->freq+r->freq;
-            q.push(*r);
-            delete r;
+            tmp.left=l;
+            tmp.right=r;
+            tmp.freq=l->freq+r->freq;
+            q.push(tmp);
         }
-        root=new Node;
+        root=new Node();
         *root=q.top();
         q.pop();
+        cout<<length(root,0)<<endl;
     }
 }
