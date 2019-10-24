@@ -30,12 +30,12 @@ int alphabet[52];
 int main(){
     int t;
     cin>>t;
+    cin.get();
     while(t--){
         memset(alphabet,0,sizeof(alphabet));
         char c;
         Node tmp,*root;
         priority_queue<Node> q;
-        cin.ignore('\n');
         while((c=cin.get())!='\n'){
             if(c>='A'&&c<='Z')
                 alphabet[c-'A']++;
@@ -48,12 +48,14 @@ int main(){
                 tmp.left=nullptr;
                 tmp.right=nullptr;
                 q.push(tmp);
+                /*
                 if(i<26)
                     cout<<(char)(i+'A')<<':'<<alphabet[i]<<endl;
                 else
                 {
                     cout<<(char)(i-26+'a')<<':'<<alphabet[i]<<endl;
                 }
+                */
                 
             }
         }
