@@ -16,7 +16,10 @@ struct Node{
 int length(Node* t,int dept){
     int sum=0;
     if(t->left==nullptr&&t->right==nullptr){
-        return t->freq*dept;
+        if(dept==0)
+            return t->freq;
+        else
+            return t->freq*dept;
     }
     if(t->left!=nullptr){
         sum+=length(t->left,dept+1);
@@ -66,8 +69,10 @@ int main(){
             q.push(tmp);
         }
         root=new Node();
-        *root=q.top();
-        q.pop();
+        if(!q.empty()){
+            *root=q.top();
+            q.pop();
+        }
         cout<<length(root,0)<<endl;
     }
 }
