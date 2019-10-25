@@ -26,6 +26,7 @@ int length(Node* t,int dept){
     }
     return sum;
 }
+char buf[2001];
 int alphabet[52];
 int main(){
     int t;
@@ -33,14 +34,16 @@ int main(){
     cin.get();
     while(t--){
         memset(alphabet,0,sizeof(alphabet));
-        char c;
+        memset(buf,0,sizeof(buf));
         Node tmp,*root;
         priority_queue<Node> q;
-        while((c=cin.get())!='\n'){
-            if(c>='A'&&c<='Z')
-                alphabet[c-'A']++;
-            if(c>='a'&&c<='z')
-                alphabet[c-'a'+26]++;
+        cin.getline(buf,2001,'\n');
+        int len=strlen(buf);
+        for(int i=0;i<len;i++){
+            if(buf[i]>='A'&&buf[i]<='Z')
+                alphabet[buf[i]-'A']++;
+            if(buf[i]>='a'&&buf[i]<='z')
+                alphabet[buf[i]-'a'+26]++;
         }
         for(int i=0;i<52;i++){
             if(alphabet[i]>0){
@@ -48,15 +51,6 @@ int main(){
                 tmp.left=nullptr;
                 tmp.right=nullptr;
                 q.push(tmp);
-                /*
-                if(i<26)
-                    cout<<(char)(i+'A')<<':'<<alphabet[i]<<endl;
-                else
-                {
-                    cout<<(char)(i-26+'a')<<':'<<alphabet[i]<<endl;
-                }
-                */
-                
             }
         }
         while(q.size()>1){
