@@ -5,9 +5,13 @@
 using namespace std;
 int main(){
     cout<<"Hello World!"<<endl;
-    int a=((unsigned)-1)>>1,b=1;
-    cout.setf(ios_base::fixed);
-    cout.precision(6);
-    cout<<a/b<<endl;
-    cout<<(float)a/b<<endl;
+    string s;
+    char buf[10010];
+    cin>>s;
+    cin.get();
+    cout<<"String s is "<<s<<"lang is "<<s.size()<<endl;
+    cin.getline(buf,10010,'\n');
+    cout<<"Line is "<<buf<<"lang is "<<strlen(buf)<<endl;
+    cin.getline(buf,10010,'\n');
+    cout<<"Line is "<<buf<<"lang is "<<strlen(buf)<<endl;
 }

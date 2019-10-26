@@ -5,31 +5,6 @@
 #include <cstring>
 #include <queue>
 using namespace std;
-struct Node{
-    int freq;
-    Node* left;
-    Node* right;
-    friend bool operator<(Node a,Node b){
-        return a.freq>b.freq;
-    }
-};
-int length(Node* t,int dept){
-    int sum=0;
-    if(t->left==nullptr&&t->right==nullptr){
-        if(dept==0)
-            return t->freq;
-        else
-            return t->freq*dept;
-    }
-    if(t->left!=nullptr){
-        sum+=length(t->left,dept+1);
-    }
-    if(t->right!=nullptr){
-        sum+=length(t->right,dept+1);
-    }
-    return sum;
-}
-char buf[2001];
 int alphabet[52];
 int main(){
     int t;
@@ -37,42 +12,30 @@ int main(){
     cin.get();
     while(t--){
         memset(alphabet,0,sizeof(alphabet));
-        memset(buf,0,sizeof(buf));
-        Node tmp,*root;
-        priority_queue<Node> q;
-        cin.getline(buf,2001,'\n');
-        int len=strlen(buf);
+        priority_queue<int,vector<int>,greater<int> > q;
+        string s;
+        cin>>s;
+        int len=s.size();
         for(int i=0;i<len;i++){
-            if(buf[i]>='A'&&buf[i]<='Z')
-                alphabet[buf[i]-'A']++;
-            if(buf[i]>='a'&&buf[i]<='z')
-                alphabet[buf[i]-'a'+26]++;
+            if(s[i]>='A'&&s[i]<='Z')
+                alphabet[s[i]-'A']++;
+            if(s[i]>='a'&&s[i]<='z')
+                alphabet[s[i]-'a'+26]++;
         }
-        for(int i=0;i<52;i++){
-            if(alphabet[i]>0){
-                tmp.freq=alphabet[i];
-                tmp.left=nullptr;
-                tmp.right=nullptr;
-                q.push(tmp);
-            }
-        }
+        while(!q.empty())
+            q.pop();
+        for(int i=0;i<52;i++)
+            if(alphabet[i]>0)
+                q.push(alphabet[i]);
+        int ans=0;
         while(q.size()>1){
-            Node* l=new Node;
-            Node* r=new Node;
-            *l=q.top();
+            int l=q.top();
             q.pop();
-            *r=q.top();
+            int r=q.top();
             q.pop();
-            tmp.left=l;
-            tmp.right=r;
-            tmp.freq=l->freq+r->freq;
-            q.push(tmp);
+            ans+=(l+r);
+            q.push(l+r);
         }
-        root=new Node();
-        if(!q.empty()){
-            *root=q.top();
-            q.pop();
-        }
-        cout<<length(root,0)<<endl;
+        cout<<ans<<endl;
     }
 }
