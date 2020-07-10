@@ -1,2 +1,2 @@
-# buaa
+# 算法与数据结构
 BUAA ONLINE JUDGE(OJ4TH)
