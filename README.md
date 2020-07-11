@@ -1,2 +1,2 @@
 # 算法与数据结构
-BUAA ONLINE JUDGE(OJ4TH)
+OJ4TH Problem2375 生日宴会(拓扑排序、优先队列)
