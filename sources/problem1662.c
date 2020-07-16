@@ -8,15 +8,12 @@ Vertex tree[6000];
 short indegree[6000]={0};//记录节点入度，用来找老白兔的。  
 short dp[6000][2];
 int solve(int i){
-    if(tree[i].next==NULL){
-        dp[i][0]=0;
-        dp[i][1]=tree[i].value;
-    }else{
-        int sum=0;
-        while(tree[i].next!=NULL){
-            sum+=solve(tree[i].next->value);
-            tree[i].next=tree[i].next->next;
-        }
+    dp[i][0]=0;
+    dp[i][1]=tree[i].value;
+    while(tree[i].next!=NULL){
+        dp[i][0]+=solve(tree[i].next->value);
+        dp[i][1]+=dp[tree[i].next->value][0];
+        tree[i].next=tree[i].next->next;
     }
     return dp[i][0]>dp[i][1]?dp[i][0]:dp[i][1];
 }
@@ -39,7 +36,7 @@ int main(){
     }
     for(int i=1;i<=n;i++){
         if(!indegree[i])
-            printf("root is %d\n",i);
+            printf("%d\n",solve(i));
     }
 
 }
