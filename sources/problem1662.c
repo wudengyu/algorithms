@@ -12,7 +12,11 @@ int solve(int i){
         dp[i][0]=0;
         dp[i][1]=tree[i].value;
     }else{
-        
+        int sum=0;
+        while(tree[i].next!=NULL){
+            sum+=solve(tree[i].next->value);
+            tree[i].next=tree[i].next->next;
+        }
     }
     return dp[i][0]>dp[i][1]?dp[i][0]:dp[i][1];
 }
