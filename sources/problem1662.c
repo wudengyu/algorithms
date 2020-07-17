@@ -4,16 +4,19 @@ typedef struct vertex{
     int value;
     struct vertex* next;
 }Vertex;
-Vertex tree[6000];
-short indegree[6000]={0};//记录节点入度，用来找老白兔的。  
-short dp[6000][2];
+Vertex tree[6001];
+int indegree[6001]={0};//记录节点入度，用来找老白兔的。  
+int dp[6001][2];
 int solve(int i){
+    Vertex* child;
     dp[i][0]=0;
     dp[i][1]=tree[i].value;
     while(tree[i].next!=NULL){
-        dp[i][0]+=solve(tree[i].next->value);
-        dp[i][1]+=dp[tree[i].next->value][0];
-        tree[i].next=tree[i].next->next;
+        child=tree[i].next;
+        dp[i][0]+=solve(child->value);
+        dp[i][1]+=dp[child->value][0];
+        tree[i].next=child->next;
+        free(child);
     }
     return dp[i][0]>dp[i][1]?dp[i][0]:dp[i][1];
 }
@@ -38,5 +41,4 @@ int main(){
         if(!indegree[i])
             printf("%d\n",solve(i));
     }
-
 }
