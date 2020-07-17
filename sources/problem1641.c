@@ -5,6 +5,8 @@ int main(){
     scanf("%d",&n);
     for(int i=0;i<n;i++){
         scanf("%d%d",&ai,&pi);
+        int s=tail++;
+        while(s>0&&(a[s]>ai||a[s]==ai&&p[s]>pi))
         if(tail==-1){
             tail=0;
             a[tail]=ai;
