@@ -1,27 +1,32 @@
 #include <stdio.h>
-int a[200000],p[200000];
+#include <stdlib.h>
+struct node{
+    unsigned long long a;
+    unsigned long long p;
+}tower[200000];
+int comp(const void * x,const void * y){
+    if(((struct node *)x)->a!=((struct node *)y)->a)
+        return ((struct node *)x)->a-((struct node *)y)->a;
+    else
+        return ((struct node *)x)->p-((struct node *)y)->p;
+}
 int main(){
-    int n,ai,pi,tail=-1;
+    int n,s=0;
+    unsigned long long ai,pi,cost=0;
     scanf("%d",&n);
     for(int i=0;i<n;i++){
-        scanf("%d%d",&ai,&pi);
-        int s=tail++;
-        while(s>0&&(a[s]>ai||a[s]==ai&&p[s]>pi))
-        if(tail==-1){
-            tail=0;
-            a[tail]=ai;
-            p[tail]=pi;
-            continue;
-        }
-        int s=0;
-        while(a[s]<ai&&s<=tail)
-            s++;
-        if(s>tail){
-            tail++;
-            a[tail]=ai;
-            p[tail]=pi;
-        }else if(a[s]==ai&&pi<p[s]){
-            p[s]=pi;
+        scanf("%d%d",&tower[i].a,&tower[i].p);
+    }
+    qsort(tower,n,sizeof(struct node),comp);
+    ai=tower[0].a;
+    pi=tower[0].p;
+    while(s<n-1){
+        s++;
+        if(tower[s].p<pi||s==n-1){
+            cost+=(tower[s].a-ai)*pi;
+            ai=tower[s].a;
+            pi=tower[s].p;
         }
     }
+    printf("%llu\n",cost);
 }
