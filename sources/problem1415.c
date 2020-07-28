@@ -1,35 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-int main(){
-    int n,m,i=0,j=0,max_win=0;
-    char c,xg[100000],yj[100000];
-    scanf("%d%d\n",&n,&m);
-    while((c=getchar())!='\n'){
-        xg[i++]=c;
-    }
-    while((c=getchar())!='\n'){
-        switch(c){
-            case 'R':
-                yj[j++]='S';
-                break;
-            case 'S':
-                yj[j++]='P';
-                break;
-            case 'P':
-                yj[j++]='R';
-                break;
-        }
-    }
-    for(int i=0;i<n;i++){
-        int temp_win=0;
-        for(int j=0;j<m&&i+j<n;j++)
-            if(xg[i+j]==yj[j])
-                temp_win++;
-        if(temp_win>max_win)
-            max_win=temp_win;
-    }
-    printf("%d\n",max_win);
-}
 #include <string.h>
 /*
 #define g 3//原根
@@ -38,22 +8,26 @@ int main(){
 */
 const long long g=3;
 const long long mod=998244353;
-const int N=1<<22;
-int t[4000005],p[4000005];
-char xg[1000001],yj[1000001];
-int rev[100000];//整数的二进制倒序表，用于“位逆序置换”
+char x[1000001],y[1000001];
+int t[40],p[40];
+int res[40];
 
-int ans[100000]={0};
+void swap(int *x,int *y){
+    int temp=*x;
+    *x=*y;
+    *y=temp;
+}
+
 void reverse(char *s){
-    char temp,*begin=s;
-    int length=0;
-    while(*(s++)!='\0')length++;
-    for(int i=0;i<length/2;i++){
-        temp=*(begin+i);
-        *(begin+i)=*(begin+length-1-i);
-        *(begin+length-1-i)=temp;
+    char temp,*end=s;
+    while(*end!='\0')end++;
+    for(int i=0;i<(end-s)/2;i++){
+        temp=*(s+i);
+        *(s+i)=*(end-1-i);
+        *(end-1-i)=temp;
     }
 }
+
 unsigned long long ksm(unsigned long long x, long y) {//快速幂
     unsigned long long p = 1;
     while(y){
@@ -64,107 +38,67 @@ unsigned long long ksm(unsigned long long x, long y) {//快速幂
     return p;
 }
 void ntt(int a[],int len,int inv){//把一个多项式由系数形式转换成点集形式或反过来，参数inv指示转换方向
-    int length=1;
-    while(length<len)length<<=1;//计算不小于len的2的整数次幂
-    int *ar=(int *)malloc(length*sizeof(int));//len不一定是2的整数次幂，所以申请一个新的数组
-    memset(ar,0,length*sizeof(int));
-    for(int i=0;i<len;i++){//“位逆序置换”:把原数组按置换后的位置复制到新数组
-        ar[rev[i]]=a[i];
+    int bits=0;
+    while((1<<bits)<len)bits++;//len的二进制位数
+    for(int i=0;i<len;i++){//“位逆序置换”，先计算下标的二进制逆序，下标逆序大于下标的交换
+        int t=0;
+        for(int j=0;j<bits;j++){
+            if(i>>j&1)
+                t|=1<<(bits-j-1);
+        }
+        if(i<t)
+            swap(&a[i],&a[t]);
     }
-    for(int s=1;s<length;s<<1){//s是准备合并序列的长度的二分之一
+    for(int s=1;s<len;s<<=1){//s是准备合并序列的长度的二分之一
         int w=ksm(g,(mod-1)/(s*2));//原根
         if(inv==-1)                //逆变换
             w=ksm(w,mod-2);
-        for(int k=0;k<length;k+=s*2){
+        for(int k=0;k<len;k+=s*2){
             int omega=1;
             for(long long j=0;j<s;j++){
-                int t=omega*ar[k+j+s]%mod;
-                int u=ar[k+j];
-                ar[k+j]=(u+t)%mod;
-                ar[k+j+s]=(u-t+mod)%mod;
+                int t=omega*a[k+j+s]%mod;
+                int u=a[k+j];
+                a[k+j]=(u+t)%mod;
+                a[k+j+s]=(u-t+mod)%mod;
                 omega=omega*w%mod;
             }
         }
     }
 }
-void solve(char c,int length){
+void solve(char c,char d,int length){
     for(int i=0;i<length;i++){
-        if(xg[i]==c)
-            t[i]=1;
-        else
-            t[i]=0;
-        if(yj[i]==c)
+        if(y[i]==c)
             p[i]=1;
         else
             p[i]=0;
-    }
-    fft(t,length,1);
-    fft(p,length,-1); 
-    for(int i=0;i<length;i++) t[i]=t[i]*p[i]; 
-    fft(t,length,-1); 
-    for(int i=0;i<length;i++) 
-        sum[i]= (int)(f[i].r / n + 0.5); 
-    for(int i = 0;i < n;i++)     
-        res[i] += sum[i];     
-} 
-*/
-int main(){
-    int n,m,pos,bits;
-    char c;
-    scanf("%d%d\n",&n,&m);
-    scanf("%s%s",xg,yj);
-    for(int i=0;i<m;i++){
-        if(yj[i]=='R')
-            yj[i]='S';
-        else if(yj[i]=='S')
-            yj[i]='T';
+        if(x[i]!=d)
+            t[i]=1;
         else
-            yj[i]='R';
+            t[i]=0;
     }
-    reverse(yj);
-    /*
-    pos=0;
-    while((c=getchar())!='\n'){
-        switch(c){
-            case 'R':
-                t[0][pos++]=1;
-                break;
-            case 'S':
-                t[1][pos++]=1;
-                break;
-            case 'T':
-            default:
-                t[2][pos++]=1;
-                break;
-        }
+    ntt(t,length,1);
+    ntt(p,length,1); 
+    for(int i=0;i<length;i++) t[i]=t[i]*p[i]; 
+    ntt(t,length,-1); 
+    for(int i=0;i<length;i++)     
+        res[i]+=t[i];     
+} 
+int main(){
+    int l,n,m;
+    int ans=0;
+    scanf("%d%d\n",&n,&m);
+    scanf("%s%s",x,y);
+    reverse(y);
+    memset(res,0,40*sizeof(int));
+    l=1;
+    while(l<n+m)l<<=1;
+    solve('R','S',l);
+    solve('S','T',l);
+    solve('T','R',l);
+    for (int i=m-1;i<n+m-1;i++){
+        if(res[i]>ans)
+            ans=res[i];
     }
-    pos=0;
-    while((c=getchar())!='\n'){
-        switch(c){
-            case 'R':
-                p[1][pos++]=1;
-                break;
-            case 'S':
-                p[2][pos++]=1;
-                break;
-            case 'T':
-            default:
-                p[0][pos++]=1;
-                break;
-        }
-    }
-    //初始化二进制倒序表，“位逆序置换”时用
-    bits=0;//模板字符串长度的二进制位数
-    while((1<<bits)<m)bits++;
-    for(int i=0;i<(1<<bits);i++){
-        rev[i]=(rev[i>>1]>>1)|((i&1)<<(bits-1));
-    }
-    for(int i=0;i<3;i++){
-        int *tmp1=ntt(p[i],m,1);
-        for(int j=0;j<n;j++){
-            int *tmp2=ntt(&t[i][j],j+m<n?m:n-j,1);
-        }
-    }
-    */
-
+    printf("%d\n",ans);
+    return 0;
 }

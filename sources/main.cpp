@@ -1,17 +1,8 @@
 #include <iostream>
-#include <cstring>
-#include <typeinfo>
-#include <cstdio>
+#include <complex>
 using namespace std;
+const double PI=acos(-1);
 int main(){
-    cout<<"Hello World!"<<endl;
-    string s;
-    char buf[10010];
-    cin>>s;
-    cin.get();
-    cout<<"String s is "<<s<<"lang is "<<s.size()<<endl;
-    cin.getline(buf,10010,'\n');
-    cout<<"Line is "<<buf<<"lang is "<<strlen(buf)<<endl;
-    cin.getline(buf,10010,'\n');
-    cout<<"Line is "<<buf<<"lang is "<<strlen(buf)<<endl;
+    complex<double> a(cos(2*PI),sin(2*PI));
+    cout<<a<<endl;
 }
