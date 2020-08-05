@@ -1,136 +1,91 @@
 #include <iostream>
+#include <complex>
 #include <cmath>
 #include <algorithm>
 using namespace std;
-const int N = 400005; //一般开出4倍空间
-const double PI = acos(-1.0);
-struct cp
-{
-    double r, i;
-    cp() {}
-    cp(double _r, double _i)
-    {
-        r = _r;
-        i = _i;
+const int N=2<<20; //一般开出4倍空间，实际最大可能用到2倍再扩展到2的整数次方，所以这里取2^21
+char x[N],y[N];
+complex<double> f[N], g[N];
+int sum[N];
+void fft(complex<double> a[],int len,int inv){
+    for(int i=0,j=0;i<len;i++){//采用雷德算法进行位逆序变换，很多写法i直接从1开始，因为0显然是不需要变换位置，所以不影响结果。
+        int k=len;//len是2的整数次幂，决定了二进制的位数；
+        if(i<j)swap(a[i],a[j]);
+        //以下计算j按二进制逆序的下一个数，从最高位加起，向右进位
+        while(j&(k>>=1))j&=~k;//这一步在很多代码中用算术运算代替逻辑运算（右移就是除以2，位与可以用大于来判断）结果是一样的，但是就不太好理解了。
+        j|=k;//前一步只是处理了需要进位的，不需要进位之后，置1（或运算）
     }
-    cp operator+(const cp a) const
-    {
-        return cp(a.r + r, a.i + i);
-    }
-    cp operator-(const cp a) const
-    {
-        return cp(r - a.r, i - a.i);
-    }
-    cp operator*(const cp a) const
-    {
-        return cp(r * a.r - i * a.i, r * a.i + i * a.r);
-    }
-    cp conj()
-    {
-        return cp(r, -i);
-    }
-};
-int n = 1, m;
-cp f[N], g[N], omg[N], inv[N];
-void FFT_init()
-{
-    for (int i = 0; i < n; i++)
-    {
-        omg[i] = cp(cos(2 * PI * i / n), sin(2 * PI * i / n));
-        inv[i] = omg[i].conj();
-    }
-}
-void fft(cp *a, cp *omg)
-{
-    int lim = 0;
-    while ((1 << lim) < n)
-        lim++;
-    for (int i = 0; i < n; i++)
-    {
-        int t = 0;
-        for (int j = 0; j < lim; j++)
-            if (i >> j & 1)
-                t |= 1 << (lim - j - 1);
-        if (i < t)
-            swap(a[i], a[t]);
-    }
-    for (int l = 2; l <= n; l *= 2)
-    {
-        int m = l / 2;
-        for (cp *p = a; p != a + n; p += l)
-        {
-            for (int i = 0; i < m; i++)
-            {
-                cp t = omg[n / l * i] * p[m + i];
-                p[m + i] = p[i] - t;
-                p[i] = p[i] + t;
+    for(int s=2;s<=len;s<<=1){//s是准备合并序列的长度
+        complex<double> wm(cos(inv*2*M_PI/s),sin(inv*2*M_PI/s));
+        for(int k=0;k<len;k+=s){//步长是序列的长度，循环一次处理一个序列
+            complex<double> w(1,0);
+            for(int j=0;j<s/2;j++){//前一半和后一半合并，所以循环终止条件是到k+s/2
+                complex<double> t=w*a[k+j+s/2];
+                complex<double> u=a[k+j];
+                a[k+j]=u+t;
+                a[k+j+s/2]=u-t;
+                w=w*wm;
             }
         }
     }
+    if(inv==-1)
+        for(int i=0;i<len;i++)
+            a[i].real(a[i].real()/len);
 }
-int res[N], sum[N];
-char a[N], b[N];
-int lena, lenb;
-void solve(char c)
-{
-    for (int i = 0; i < lena; i++)
-    {
-        if (a[i] == c)
-            f[i].r = 1;
+void solve(char c,int n,int m,int len){
+    for(int i=0;i<n;i++){
+        if(x[i]==c)
+            f[i].real(1);
         else
-            f[i].r = 0;
-        f[i].i = 0;
+            f[i].real(0);
+        f[i].imag(0);
     }
-    for (int i = lena; i < n; i++)
-    {
-        f[i].r = 0;
-        f[i].i = 0;
+    for(int i=n;i<len;i++){
+        f[i].real(0);
+        f[i].imag(0);
     }
-    for (int i = 0; i < lenb; i++)
-    {
-        if (b[i] == c)
-            g[i].r = 1;
+    for(int i=0;i<m;i++){
+        if(y[i]==c)
+            g[i].real(1);
         else
-            g[i].r = 0;
-        g[i].i = 0;
+            g[i].real(0);
+        g[i].imag(0);
     }
-    for (int i = lenb; i < n; i++)
-    {
-        g[i].r = 0;
-        g[i].i = 0;
+    for(int i=m;i<len;i++){
+        g[i].real(0);
+        g[i].imag(0);
     }
-    fft(f, omg), fft(g, omg);
-    for (int i = 0; i < n; i++)
-        f[i] = f[i] * g[i];
-    fft(f, inv);
-    for (int i = 0; i < n; i++)
-        sum[i] = (int)(f[i].r / n + 0.5);
-    for (int i = 0; i < n; i++)
-        res[i] += sum[i];
+    fft(f,len,1);
+    fft(g,len,1);
+    for(int i=0;i<len;i++)
+        f[i]=f[i]*g[i];
+    fft(f,len,-1);
+    for(int i=0;i<len;i++)
+        sum[i]+=(int)(f[i].real()+0.5);
 }
-int main()
-{
-    scanf("%d%d", &lena, &lenb);
-    scanf("%s%s", a, b);
-    for (int i = 0; i < lena; i++)
-    {
-        if (a[i] == 'S')
-            a[i] = 'R';
-        else if (a[i] == 'R')
-            a[i] = 'P';
-        else if (a[i] == 'P')
-            a[i] = 'S';
+int main(){
+    int n,m,len=1,ans=0;
+    scanf("%d%d",&n,&m);
+    scanf("%s%s",x,y);
+    for (int i=0;i<m;i++){
+        switch(y[i]){
+            case 'R':
+                y[i]='S';
+                break;
+            case 'S':
+                y[i]='P';
+                break;
+            case 'P':
+                y[i]='R';
+        }
     }
-    reverse(b, b + lenb);
-    while (n < lena * 2 || n < lenb * 2)
-        n <<= 1;
-    FFT_init();
-    solve('S');
-    solve('R');
-    solve('P');
-    int ans = 0;
-    for (int i = lenb - 1; i < lena + lenb - 1; i++)
-        ans = max(ans, res[i]);
-    printf("%d\n", ans);
+    reverse(y,y+m);
+    while(len<n+m-1)len<<=1;
+    solve('R',n,m,len);
+    solve('S',n,m,len);
+    solve('P',n,m,len);
+    for(int i=m-1;i<n+m-1;i++)
+        ans=max(ans,sum[i]);
+    printf("%d\n",ans);
     return 0;
 }
