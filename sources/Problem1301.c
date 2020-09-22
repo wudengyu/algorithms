@@ -4,140 +4,130 @@
 #include <limits.h>
 #define N 100000 + 1
 typedef struct edge{
-    int id;
+    int to;
     int cost;
-    struct edge *next;
+    int next;
 }Edge;
-struct vertex{
-    int id;
+typedef struct vertex{
     int depth;
     long long dist;
-    struct edge *adj;
-    struct vertex *some;
-}tree[N],*depths[N];
-int queue[N],len;//len为队列实际长度
-int pos[N];//记录节点在队列中的位置
+    int adj;
+}Vetrex;
+Vetrex vertexs[3*(N+1)];//顶点数最多3*N，1~N用来保存树的节点，N+1~2N用来保存附加的上行中转节点，2N+1~3N用来保存附加的下行中转节点
+Edge edges[5*(N+1)];//最大边数5*N
+int mark[3*(N+1)],pq[3*N],len;//pq是顶点的索引的最小优先队列，len为队列实际长度
 void swim(int a[],int k){
-    while(k>1&&tree[a[k/2]].dist>tree[a[k]].dist){
+    while(k>1&&vertexs[a[k/2]].dist>vertexs[a[k]].dist){
         int temp=a[k/2];
         a[k]=a[k/2];
         a[k/2]=temp;
-        pos[a[k]]=k;
-        pos[a[k/2]]=k/2;
         k/=2;
     }
 }
 void sink(int a[],int len,int k){
     while(2*k<=len){
         int j=2*k;
-        if(j<len&&tree[a[j]].dist>tree[a[j+1]].dist)j++;
-        if(tree[a[k]].dist<tree[a[j]].dist)break;
+        if(j<len&&vertexs[a[j]].dist>vertexs[a[j+1]].dist)j++;
+        if(vertexs[a[k]].dist<vertexs[a[j]].dist)break;
         int temp=a[k];
         a[k]=a[j];
         a[j]=temp;
-        pos[a[k]]=k;
-        pos[a[j]]=j;
         k=j;
     }
 }
-void calcdepth(struct vertex a[],int id){
-    Edge* temp=a[id].adj;
-    while(temp!=NULL){
-        a[temp->id].depth=a[id].depth+1;
-        a[temp->id].some=depths[a[temp->id].depth];
-        depths[a[temp->id].depth]=&a[temp->id];
-        calcdepth(a,temp->id);
-        temp=temp->next;
+void dfs(Vetrex a[],int id){
+    int temp=a[id].adj;
+    while(temp!=-1){
+        a[edges[temp].to].depth=a[id].depth+1;
+        dfs(a,edges[temp].to);
+        temp=edges[temp].next;
     }
+    return;
+}
+void enqueue(int a[],int *len,int value){
+    (*len)++;
+    a[*len]=value;
+    swim(a,*len);
+}
+int dequeue(int a[],int *len){
+    int temp=a[1];
+    a[1]=a[(*len)--];
+    if(*len<0)return -1;
+    sink(a,*len,1);
+    return temp;
 }
 int main(){
     int T, n, p, s, t, u, v, w;
+    int maxdepth;
     scanf("%d", &T);
     for(int c=1;c<=T;c++){
         scanf("%d%d%d%d",&n,&p,&s,&t);
-        for(int i=1;i<=n;i++){//初始化，包括树和节点
-            tree[i].id=i;
-            tree[i].adj=NULL;
-            tree[i].some=NULL;
-            tree[i].dist=__LONG_LONG_MAX__;
-            depths[i]=NULL;
-            pos[i]=0;
+        for(int i=1;i<=n;i++){//初始化树和标志数组
+            vertexs[i].adj=-1;
+            vertexs[i].depth=0;
+            vertexs[i].dist=__LONG_LONG_MAX__;
+            mark[i]=0;
         }
         for (int i = 0; i < n - 1; i++){
             scanf("%d%d%d", &u, &v, &w);
-            Edge *temp = (Edge *)malloc(sizeof(Edge));
-            temp->id = v;
-            temp->cost = w;
-            temp->next = tree[u].adj;
-            tree[u].adj = temp;
+            edges[i].to = v;
+            edges[i].cost = w;
+            edges[i].next = vertexs[u].adj;
+            vertexs[u].adj = i;
         }
-        tree[1].depth=0;//1号节点是根节点，深度为0
-        depths[0]=&tree[1];
-        calcdepth(tree,1);//深度优先算法计算每个节点深度
-        
+        dfs(vertexs,1);//深度优先算法计算每个树节点的深度，返回树的高度
+        //printf("maxdepth=%d\n",maxdepth);
+        for(int i=1;i<=n;i++){//初始化附加的点及其标记数组中的值，主要是确保邻接边指向空
+            vertexs[N+i].adj=-1;
+            vertexs[N+i].dist=__LONG_LONG_MAX__;
+            vertexs[2*N+i].adj=-1;
+            vertexs[2*N+i].dist=__LONG_LONG_MAX__;
+            mark[N+i]=0;
+            mark[2*N+i]=0;
+        }
+        for(int i=1;i<=n;i++){//遍历树节点，根据每个节点的深度，添加到中间节点的上行和下行边；
+            if(vertexs[i].depth>0){
+                edges[N+i].to=2*N+vertexs[i].depth;
+                edges[N+i].cost=p/2;
+                edges[N+i].next=vertexs[i].adj;
+                vertexs[i].adj=N+i;
+                edges[2*N+i].to=i;
+                edges[2*N+i].cost=p-p/2;
+                edges[2*N+i].next=vertexs[N+vertexs[i].depth].adj;
+                vertexs[N+vertexs[i].depth].adj=2*N+i;
+            }
+            if(vertexs[i].depth<maxdepth){
+                edges[3*N+i].to=N+vertexs[i].depth+1;
+                edges[3*N+i].cost=p/2;
+                edges[3*N+i].next=vertexs[i].adj;
+                vertexs[i].adj=3*N+i;
+                edges[4*N+i].to=i;
+                edges[4*N+i].cost=p-p/2;
+                edges[4*N+i].next=vertexs[2*N+vertexs[i].depth+1].adj;
+                vertexs[2*N+vertexs[i].depth+1].adj=4*N+i;
+            }
+        }
+        //dijkstra(vertexs,s,t);
         len=1;//队列长度
-        queue[1]=s;//起始节点是s
-        tree[s].dist=0;
+        pq[1]=s;//起始节点是s
+        vertexs[s].dist=0;
         while(len>0){
-            int current=queue[1];//取出最小节点
-            queue[1]=queue[len--];//最后一个节点取出放到第一个节点位置（此时队列可能已经为空）
-            if(len>0)
-                pos[queue[1]]=1;
-            pos[current]=0;
-            sink(queue,len,1);//下沉，队列即使为空也无妨
-            Edge* adj=tree[current].adj;
-            while(adj!=NULL){
-                int w=adj->id;
-                if(tree[w].dist>tree[current].dist+adj->cost){
-                    tree[w].dist=tree[current].dist+adj->cost;
-                    if(pos[w])
-                        swim(queue,pos[w]);//如果节点已经在队列中，更新距离后可能需要“上浮”
-                    else{
-                        len++;
-                        queue[len]=w;
-                        pos[w]=len;
-                        swim(queue,len);
-                    }
+            int current=0;
+            do{
+                current=dequeue(pq,&len);//取出最小节点  
+            }while(mark[current]==1);
+            if(current==t||current==-1)break;
+            mark[current]=1;//标记
+            int adj=vertexs[current].adj;
+            while(adj!=-1){
+                int w=edges[adj].to;
+                if(vertexs[w].dist>vertexs[current].dist+edges[adj].cost){
+                    vertexs[w].dist=vertexs[current].dist+edges[adj].cost;
+                    enqueue(pq,&len,w);
                 }
-                adj=adj->next;
-            }//这个循环处理树中的节点，下一部分处理相邻层次节点，方法是一样的
-            /*
-            if(tree[current].depth>0){
-                struct vertex *so=depths[tree[current].depth-1];
-                while(so!=NULL){
-                    int w=so->id;
-                    if(tree[w].dist>tree[current].dist+p){
-                        tree[w].dist=tree[current].dist+p;
-                        if(pos[w])
-                            swim(queue,pos[w]);//如果节点已经在队列中，更新距离后可能需要“上浮”
-                        else{
-                            len++;
-                            queue[len]=w;
-                            pos[w]=len;
-                            swim(queue,len);
-                        }
-                    }
-                    so=so->some;
-                }
+                adj=edges[adj].next;
             }
-            struct vertex *so=depths[tree[current].depth+1];
-            while(so!=NULL){
-                int w=so->id;
-                if(tree[w].dist>tree[current].dist+p){
-                    tree[w].dist=tree[current].dist+p;
-                    if(pos[w])
-                        swim(queue,pos[w]);//如果节点已经在队列中，更新距离后可能需要“上浮”
-                    else{
-                        len++;
-                        queue[len]=w;
-                        pos[w]=len;
-                        swim(queue,len);
-                    }
-                }
-                so=so->some;
-            }
-            */
         }
-        printf("Case #%d: %lld",c,tree[t].dist);
+        printf("Case #%d: %lld\n",c,vertexs[t].dist);
     }
 }
