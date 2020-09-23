@@ -9,13 +9,14 @@ typedef struct edge{
     int next;
 }Edge;
 typedef struct vertex{
+    int from;
     int depth;
-    long long dist;
+    unsigned long long dist;
     int adj;
 }Vetrex;
-Vetrex vertexs[3*(N+1)];//顶点数最多3*N，1~N用来保存树的节点，N+1~2N用来保存附加的上行中转节点，2N+1~3N用来保存附加的下行中转节点
-Edge edges[5*(N+1)];//最大边数5*N
-int mark[3*(N+1)],pq[3*N],len;//pq是顶点的索引的最小优先队列，len为队列实际长度
+Vetrex vertexs[3*N];//顶点数最多3*N，1~N用来保存树的节点，N+1~2N用来保存附加的上行中转节点，2N+1~3N用来保存附加的下行中转节点
+Edge edges[5*N];//最大边数5*N
+int mark[3*N],pq[5*N],len;//pq是顶点的索引的最小优先队列，len为队列实际长度
 void swim(int a[],int k){
     while(k>1&&vertexs[a[k/2]].dist>vertexs[a[k]].dist){
         int temp=a[k/2];
@@ -35,14 +36,16 @@ void sink(int a[],int len,int k){
         k=j;
     }
 }
-void dfs(Vetrex a[],int id){
+int dfs(Vetrex a[],int id){
     int temp=a[id].adj;
+    int d=a[id].depth,maxd=0;
     while(temp!=-1){
-        a[edges[temp].to].depth=a[id].depth+1;
-        dfs(a,edges[temp].to);
+        a[edges[temp].to].depth=d+1;
+        int m=dfs(a,edges[temp].to);
         temp=edges[temp].next;
+        maxd=maxd>m?maxd:m;
     }
-    return;
+    return maxd>d?maxd:d;
 }
 void enqueue(int a[],int *len,int value){
     (*len)++;
@@ -75,8 +78,7 @@ int main(){
             edges[i].next = vertexs[u].adj;
             vertexs[u].adj = i;
         }
-        dfs(vertexs,1);//深度优先算法计算每个树节点的深度，返回树的高度
-        //printf("maxdepth=%d\n",maxdepth);
+        maxdepth=dfs(vertexs,1);//深度优先算法计算每个树节点的深度，返回树的高度
         for(int i=1;i<=n;i++){//初始化附加的点及其标记数组中的值，主要是确保邻接边指向空
             vertexs[N+i].adj=-1;
             vertexs[N+i].dist=__LONG_LONG_MAX__;
@@ -111,11 +113,12 @@ int main(){
         len=1;//队列长度
         pq[1]=s;//起始节点是s
         vertexs[s].dist=0;
+        vertexs[s].from=s;
         while(len>0){
             int current=0;
             do{
-                current=dequeue(pq,&len);//取出最小节点  
-            }while(mark[current]==1);
+                current=dequeue(pq,&len);//取出最小节点
+            }while(mark[current]==1&&current!=-1);
             if(current==t||current==-1)break;
             mark[current]=1;//标记
             int adj=vertexs[current].adj;
@@ -123,11 +126,14 @@ int main(){
                 int w=edges[adj].to;
                 if(vertexs[w].dist>vertexs[current].dist+edges[adj].cost){
                     vertexs[w].dist=vertexs[current].dist+edges[adj].cost;
+                    vertexs[w].from=current;
                     enqueue(pq,&len,w);
+                    printf("-----");
                 }
+                printf("V[%d] from %d,dist=%llu\n",w,current,vertexs[w].dist);
                 adj=edges[adj].next;
             }
         }
-        printf("Case #%d: %lld\n",c,vertexs[t].dist);
+        printf("Case #%d: %llu\n",c,vertexs[t].dist);
     }
 }
