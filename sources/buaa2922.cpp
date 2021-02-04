@@ -11,16 +11,22 @@ struct egde{
     int from;
     int to;
     int cost;
-};
-unsigned long long dist[N];
-struct comp{
-    bool operator()(int a,int b){
-        return dist[a]>dist[b];
+    bool operator==(const egde &a) const{
+        return from==a.from&&to==a.to;
     }
 };
-int vomit[N],path[N];
-vector<forward_list<egde>> graph(N);
-vector<set<int>> preorder(N);
+struct vertex{
+    int vomit;
+    long long dist;
+    forward_list<egde> adjoin;
+}graph[N];
+int mask[N];
+struct comp{
+    bool operator()(egde a,egde b){
+        return graph[a.to].dist>graph[b.to].dist;
+    }
+};
+/*
 int traversal(int begin,int end,int step,int vertex){
     if(vertex==begin){
         int min_vomit=1e9;
@@ -43,32 +49,29 @@ int traversal(int begin,int end,int step,int vertex){
         return returnvalue;
     }
 }
+*/
 void Dijkstra(int begin){
-    priority_queue<int,vector<int>,comp> pq;
-    set<int> visited;
-    dist[begin]=0;
-    pq.push(begin);
+    priority_queue<egde,vector<egde>,comp> pq;
+    graph[begin].dist=0;
+    mask[begin]=1;
+    for(auto p=graph[begin].adjoin.begin();p!=graph[begin].adjoin.end();p++){
+        pq.push(*p);
+    }
     while(!pq.empty()){
-        int current;
-        do{
-            current=pq.top();
-            pq.pop();
-        }while(visited.find(current)!=visited.end()&&!pq.empty());
-        if(visited.find(current)!=visited.end()) break;
-        visited.insert(current);
-        for(auto e=graph[current].begin();e!=graph[current].end();e++){
-            if(dist[e->from]+e->cost<dist[e->to]){
-                dist[e->to]=dist[e->from]+e->cost;
-                preorder[e->to].clear();
-                preorder[e->to].insert(e->from);
-                pq.push(e->to);
-            }else if(dist[e->from]+e->cost==dist[e->to]){
-                preorder[e->to].insert(e->from);
-                pq.push(e->to);
+        egde current=pq.top();
+        pq.pop();
+        if(mask[current.to]){
+            graph[current.from].adjoin.remove(current);
+            continue;
+        }
+        mask[current.to]=1;
+        for(auto e=graph[current.to].adjoin.begin();e!=graph[current.to].adjoin.end();e++){
+            if(graph[e->from].dist+e->cost<graph[e->to].dist){
+                graph[e->to].dist=graph[e->from].dist+e->cost;
+                pq.push(*e);
             }
         }
     }
-    cout<<traversal(1,7,0,7)<<endl;
 }
 
 int main(){
@@ -77,12 +80,20 @@ int main(){
     cin>>n>>m;
     for(int i=0;i<m;i++){
         cin>>a>>b>>d;
-        graph[a].push_front({a,b,d});
-        graph[b].push_front({b,a,d});
+        graph[a].adjoin.push_front({a,b,d});
+        graph[b].adjoin.push_front({b,a,d});
     }
     for(int i=1;i<=n;i++){
-        cin>>vomit[i];
-        dist[i]=UINT64_MAX;//顺便把dist初始化了
+        cin>>graph[i].vomit;
+        graph[i].dist=__LONG_LONG_MAX__;//顺便把dist初始化了
+        mask[i]=0;
     }
     Dijkstra(1);
+    for(int i=1;i<=n;i++){
+        cout<<"V("<<i<<"):";
+        for(auto e=graph[i].adjoin.begin();e!=graph[i].adjoin.end();e++){
+            cout<<e->to<<" ";
+        }
+        cout<<endl;
+    }
 }
