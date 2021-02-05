@@ -3,6 +3,7 @@
 #include<queue>
 #include<map>
 #include<set>
+#include<list>
 #include<forward_list>
 #include<limits>
 using namespace std;
@@ -11,19 +12,15 @@ struct egde{
     int from;
     int to;
     int cost;
-    bool operator==(const egde &a) const{
-        return from==a.from&&to==a.to;
-    }
 };
 struct vertex{
     int vomit;
     long long dist;
-    forward_list<egde> adjoin;
+    list<egde> adjoin;
 }graph[N];
-int mask[N];
 struct comp{
-    bool operator()(egde a,egde b){
-        return graph[a.to].dist>graph[b.to].dist;
+    bool operator()(list<egde>::iterator a,list<egde>::iterator b){
+        return graph[a->to].dist>graph[b->to].dist;
     }
 };
 /*
@@ -51,24 +48,23 @@ int traversal(int begin,int end,int step,int vertex){
 }
 */
 void Dijkstra(int begin){
-    priority_queue<egde,vector<egde>,comp> pq;
+    priority_queue<list<egde>::iterator,vector<list<egde>::iterator>,comp> pq;
     graph[begin].dist=0;
-    mask[begin]=1;
     for(auto p=graph[begin].adjoin.begin();p!=graph[begin].adjoin.end();p++){
-        pq.push(*p);
+        graph[p->to].dist=p->cost;
+        pq.push(p);
     }
     while(!pq.empty()){
-        egde current=pq.top();
+        list<egde>::iterator current=pq.top();
         pq.pop();
-        if(mask[current.to]){
-            graph[current.from].adjoin.remove(current);
-            continue;
-        }
-        mask[current.to]=1;
-        for(auto e=graph[current.to].adjoin.begin();e!=graph[current.to].adjoin.end();e++){
-            if(graph[e->from].dist+e->cost<graph[e->to].dist){
-                graph[e->to].dist=graph[e->from].dist+e->cost;
-                pq.push(*e);
+        if(graph[current->from].dist+current->cost>graph[current->to].dist){
+            graph[current->from].adjoin.erase(current);
+        }else{
+            for(auto p=graph[current->to].adjoin.begin();p!=graph[current->to].adjoin.end();p++){
+                if(graph[p->from].dist+p->cost<graph[p->to].dist){
+                    graph[p->to].dist=graph[p->from].dist+p->cost;
+                }
+                pq.push(p);
             }
         }
     }
