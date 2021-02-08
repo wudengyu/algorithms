@@ -4,6 +4,7 @@
 #include<queue>
 #include<stack>
 #include<map>
+#include<utility>
 #include<set>
 #include<list>
 #include<forward_list>
@@ -25,7 +26,7 @@ struct vertex{
     list<egde> adjoin;
 }graph[2*N+1];
 int vomit[N+1];
-int visited[2*N+1];
+int visited[2*N+1],mask[2*N+1];
 long long dist[N+1];
 struct comp{
     bool operator()(list<egde>::iterator a,list<egde>::iterator b){
@@ -68,30 +69,43 @@ void splitvertex(int s,int t,int length){
 }
 int dfs(int s,int t,int length){
     stack<list<egde>::iterator> st;
+    list<egde> path;
+    int cf=INT32_MAX;//残存容量
+    list<egde>::iterator current;
     memset(visited,0,sizeof(int)*(2*N+1));
     visited[s]=1;
     for(auto p=graph[s].adjoin.begin();p!=graph[s].adjoin.end();p++){
-        if(p->capacity-p->f>0)
+        if(p->capacity-p->f>0){
             st.push(p);
+        }
     }
-    list<egde>::iterator current;
-    bool exist=false;
     while(!st.empty()){
         current=st.top();
-        if(current->to==t){
-            exist=true;
+        if(current->to==t)
             break;
-        }
-        if(visited[current->to]==0){
-            for(auto p=graph[s].adjoin.begin();p!=graph[s].adjoin.end();p++){
-                if(p->capacity-p->f>0)
-                    st.push(p);
+        bool discover=false;
+        for(auto p=graph[current->to].adjoin.begin();p!=graph[current->to].adjoin.end();p++){
+            if(p->capacity-p->f>0&&visited[p->to]==0){
+                visited[p->to]=1;
+                st.push(p);
+                discover=true;
+                break;
             }
-            continue;
-        }else if({
-
+        }
+        if(!discover){
+            st.pop();
         }
     }
+    while(!st.empty()){
+        path.push_back(*(st.top()));
+        if(st.top()->from==s)
+            break;
+        st.pop();
+    }
+    for(auto i=path.rbegin();i!=path.rend();i++){
+        cout<<"("<<i->from<<","<<i->to<<")";
+    }
+    return st.size();
 }
 int main(){
     int n,m;
@@ -108,6 +122,8 @@ int main(){
     }
     Dijkstra(1);
     splitvertex(1,n,n);
+    cout<<dfs(1,n,n)<<endl;
+    /*
     for(int i=1;i<2*N+1;i++){
         if(!graph[i].adjoin.empty()){
             for(auto e=graph[i].adjoin.begin();e!=graph[i].adjoin.end();e++){
@@ -116,4 +132,5 @@ int main(){
             cout<<endl;
         }
     }
+    */
 }
