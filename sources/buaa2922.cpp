@@ -18,6 +18,24 @@ struct egde{
     int capacity=1e9;//容量
     int f=0;//流
     bool original=true;
+    list<egde>::iterator rev;
+    egde(){};
+    egde(int f,int t,int c){
+        from=f;
+        to=t;
+        cost=c;
+    }
+    egde(int f,int t,bool o){
+        from=f;
+        to=t;
+        cost=0;
+        capacity=0;
+        original=o;
+    }
+    egde(int f,int t,int c,int ca){
+        egde(f,t,c);
+        capacity=ca;
+    }
 };
 struct vertex{
     int e=0;//excess flow
@@ -32,12 +50,6 @@ struct comp{
         return dist[a->to]>dist[b->to];
     }
 };
-egde& search(int u,int v){
-    bool found=false;
-    for(auto p=graph[u].adjoin.begin();p!=graph[u].adjoin.end();p++){
-        
-    }
-}
 void Dijkstra(int begin){
     priority_queue<list<egde>::iterator,vector<list<egde>::iterator>,comp> pq;
     dist[begin]=0;
@@ -49,7 +61,8 @@ void Dijkstra(int begin){
         list<egde>::iterator current=pq.top();
         pq.pop();
         if(dist[current->from]+current->cost>dist[current->to]){
-            graph[current->to].adjoin.erase(current);
+            current->capacity=0;
+            current->original=false;
         }else{
             for(auto p=graph[current->to].adjoin.begin();p!=graph[current->to].adjoin.end();p++){
                 if(dist[p->from]+p->cost<dist[p->to]){
@@ -67,7 +80,10 @@ void splitvertex(int s,int t,int length){
             for(auto p=graph[length+i-1].adjoin.begin();p!=graph[length+i-1].adjoin.end();p++){
                 p->from=length+i-1;
             }
-            graph[i].adjoin.push_front({from:i,to:length+i-1,cost:0,capacity:vomit[i]});
+            graph[i].adjoin.push_front(egde(i,length+i-1,0,vomit[i]));
+            graph[length+i-1].adjoin.push_front(egde(length+i-1,i,false));
+            graph[i].adjoin.begin()->rev=graph[length+i-1].adjoin.begin();
+            graph[length+i-1].adjoin.begin()->rev=graph[i].adjoin.begin();
         }
     }
 
@@ -127,8 +143,10 @@ int main(){
     cin>>n>>m;
     for(int i=0;i<m;i++){
         cin>>a>>b>>d;
-        graph[a].adjoin.push_front({from:a,to:b,cost:d});
-        graph[b].adjoin.push_front({from:b,to:a,cost:d});
+        graph[a].adjoin.push_front(egde(a,b,d));
+        graph[b].adjoin.push_front(egde(b,a,d));
+        graph[a].adjoin.begin()->rev=graph[b].adjoin.begin();
+        graph[b].adjoin.begin()->rev=graph[a].adjoin.begin();
     }
     for(int i=1;i<=n;i++){
         cin>>vomit[i];
