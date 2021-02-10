@@ -16,7 +16,7 @@ struct egde{
     int to;
     int cost;
     int capacity=1e9;//容量
-    int f=0;//流
+    int flow=0;//流
     bool original=true;
     list<egde>::iterator rev;
     egde(){};
@@ -33,7 +33,7 @@ struct egde{
         original=o;
     }
     egde(int f,int t,int c,int ca){
-        egde(f,t,c);
+        new(this) egde(f,t,c);
         capacity=ca;
     }
 };
@@ -42,8 +42,9 @@ struct vertex{
     int h=0;
     list<egde> adjoin;
 }graph[2*N+1];
+list<egde>::iterator path[2*N+1];
 int vomit[N+1];
-int visited[2*N+1],mask[2*N+1];
+int marked[2*N+1];
 long long dist[N+1];
 struct comp{
     bool operator()(list<egde>::iterator a,list<egde>::iterator b){
@@ -76,70 +77,66 @@ void Dijkstra(int begin){
 void splitvertex(int s,int t,int length){
     for(int i=1;i<=length;i++){
         if(i!=s&&i!=t){//除了起点和终点
-            graph[length+i-1].adjoin.swap(graph[i].adjoin);
-            for(auto p=graph[length+i-1].adjoin.begin();p!=graph[length+i-1].adjoin.end();p++){
-                p->from=length+i-1;
+            graph[length+i].adjoin.swap(graph[i].adjoin);
+            for(auto p=graph[length+i].adjoin.begin();p!=graph[length+i].adjoin.end();p++){
+                p->from=length+i;
             }
-            graph[i].adjoin.push_front(egde(i,length+i-1,0,vomit[i]));
-            graph[length+i-1].adjoin.push_front(egde(length+i-1,i,false));
-            graph[i].adjoin.begin()->rev=graph[length+i-1].adjoin.begin();
-            graph[length+i-1].adjoin.begin()->rev=graph[i].adjoin.begin();
+            graph[i].adjoin.push_front(egde(i,length+i,0,vomit[i]));
+            graph[length+i].adjoin.push_front(egde(length+i,i,false));
+            graph[i].adjoin.begin()->rev=graph[length+i].adjoin.begin();
+            graph[length+i].adjoin.begin()->rev=graph[i].adjoin.begin();
         }
     }
 
 }
-int dfs(int s,int t,int length){
-    queue<list<egde>::iterator> q;
-    stack<list<egde>::iterator> temppath;
-    int cf=0;//残存容量
-    //memset(mask,0,sizeof(int)*(2*N+1));
-    for(auto p=graph[s].adjoin.begin();p!=graph[s].adjoin.end();p++){
-        if(p->capacity-p->f>0){
-            q.push(p);
-            temppath.push(p);
-            if(p->to==t)
-                break;
+void update(int s,int t,int cf){
+    int current=t;
+    while(current!=s){
+        if(path[current]->original){
+            path[current]->capacity-=cf;
+            path[current]->flow+=cf;
+            path[current]->rev->capacity=path[current]->flow;
+            path[current]->rev->flow=0;
+        }else{
+            path[current]->rev->capacity+=cf;
+            path[current]->rev->flow-=cf;
+            path[current]->capacity=path[current]->rev->flow;
+            path[current]->flow=0;
         }
+        current=path[current]->from;
     }
-    while(!q.empty()&&q.back()->to!=t){
-        list<egde>::iterator current=q.front();
+}
+int bfs(int s,int t){
+    queue<int> q;
+    int cf=1e9;//残存容量
+    memset(marked,0,sizeof(int)*(2*N+1));
+    memset(path,0,sizeof(list<egde>::iterator)*(2*N+1));
+    marked[s]=1;
+    q.push(s);
+    while(!q.empty()&&marked[t]==0){
+        int current=q.front();
         q.pop();
-        for(auto p=graph[current->to].adjoin.begin();p!=graph[current->to].adjoin.end();p++){
-            if(p->capacity-p->f>0){
-                q.push(p);
-                temppath.push(p);
-                if(p->to==t)
-                    break;
+        for(auto p=graph[current].adjoin.begin();p!=graph[current].adjoin.end();p++){
+            if(p->capacity>0&&marked[p->to]==0){
+                marked[p->to]=1;
+                path[p->to]=p;
+                q.push(p->to);
+                if(cf>p->capacity)
+                    cf=p->capacity;
+
             }
         }
-    }//循环结束时，要么队列为空（没找到路径），要么队尾是到目标的一条边
-    if(!q.empty()){
-        while(q.front()->to!=t)
-            q.pop();
-        cf=q.back()->capacity-q.back()->f;
-        while(q.back()->from!=s){
-            while(temppath.top()->to!=q.back()->from)
-                temppath.pop();
-            q.push(temppath.top());
-            if(cf>q.back()->capacity-q.back()->f)
-                cf=q.back()->capacity-q.back()->f;
-        }
-    }//从栈中取得增广路径并计算残存容量；
-    /*
-    while(!q.empty()){
-        list<egde>::iterator current=q.front();
-        q.pop();
-    }*/
-    while(!q.empty()){
-        cout<<"("<<q.front()->from<<","<<q.front()->to<<")";
-        q.pop();
     }
-    cout<<cf;
-    return 0;
+    if(marked[t]==1){
+        update(s,t,cf);
+        return cf;
+    }else
+        return 0;
 }
 int main(){
     int n,m;
     int a,b,d;
+    unsigned long long maxflow=0;
     cin>>n>>m;
     for(int i=0;i<m;i++){
         cin>>a>>b>>d;
@@ -154,12 +151,16 @@ int main(){
     }
     Dijkstra(1);
     splitvertex(1,n,n);
-    dfs(1,n,n);
+    while(bfs(1,n));
+    for(auto p=graph[1].adjoin.begin();p!=graph[1].adjoin.end();p++){
+        maxflow+=p->flow;
+    }
+    cout<<maxflow<<endl;
     /*
     for(int i=1;i<2*N+1;i++){
         if(!graph[i].adjoin.empty()){
             for(auto e=graph[i].adjoin.begin();e!=graph[i].adjoin.end();e++){
-                cout<<"("<<e->from<<","<<e->to<<")={"<<e->capacity<<","<<e->f<<"} ";
+                cout<<"("<<e->from<<","<<e->to<<")={"<<e->capacity<<","<<e->flow<<"} ";
             }
             cout<<endl;
         }
