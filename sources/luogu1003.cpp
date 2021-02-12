@@ -1,25 +1,21 @@
 #include<iostream>
 using namespace std;
-struct rug{
-    int a;
-    int b;
-    int g;
-    int k;
-};
-int find(const rug (&carpet)[10000],int length,int x,int y){
-    for(int i=length-1;i>=0;i--){
-        if(carpet->a<=x&&carpet->a+carpet->g>=x&&carpet->b<=y&&carpet->b+carpet->g>=y)
-            return i+1;
-    }
-    return -1;
-}
 int main(){
-    rug carpet[10000];
     int n,x,y;
+    int rug[10000][4];
+    int ans=-1;
     cin>>n;
     for(int i=0;i<n;i++){
-        cin>>carpet[i].a>>carpet[i].b>>carpet[i].g>>carpet[i].k;
+        for(int j=0;j<4;j++){
+            cin>>rug[i][j];
+        }
+        rug[i][2]+=rug[i][0];
+        rug[i][3]+=rug[i][1];
     }
     cin>>x>>y;
-    cout<<find(carpet,n,x,y)<<endl;
+    for(int i=0;i<n;i++){
+        if(x>=rug[i][0]&&x<=rug[i][2]&&y>=rug[i][1]&&y<=rug[i][3])
+            ans=i+1;
+    }
+    cout<<ans<<endl;
 }
