@@ -1,60 +1,9 @@
 #include<iostream>
+#include<cstring>
+#include<map>
 using namespace std;
-string matrix[9][9];
-char alphabet[9]={'+','+','+','+','+','+','+','+','+'};
-int row[9]={0,0,0,0,0,0,0,0,0};//实际0、1、……等在原表中的行号；
-int col[9]={0,0,0,0,0,0,0,0,0};//实际0、1、……等在原表中的列号；
-void zero(int length){
-    int index;
-    for(int i=1;i<length;i++){
-        index=i;
-        for(int j=1;j<length;j++){
-            if(matrix[0][j]!=matrix[i][j]){
-                index=0;
-                break;
-            }
-        }
-        if(index!=0)
-            break;
-    }
-    alphabet[0]=matrix[index][0].at(0);
-    row[0]=index;
-    for(int i=0;i<length;i++){
-        if(alphabet[0]==matrix[0][i].at(0)){
-            col[0]=i;
-        }
-    }
-}
-void one(int length){
-    for(int i=1;i<length;i++){
-        for(int j=1;j<length;j++){
-            if(matrix[i][j].length()==2&&matrix[i][j].at(1)==alphabet[0]){
-                alphabet[1]=matrix[i][j].at(0);
-                for(int k=0;k<length;k++){
-                    if(alphabet[1]==matrix[k][0].at(0)){
-                        row[1]=k;
-                    }
-                    if(alphabet[1]==matrix[0][k].at(0)){
-                        col[1]=k;
-                    }
-                }
-            }
-        }
-    }
-}
-void other(int length){
-    for(int x=2;x<length-1;x++){
-        alphabet[x]=matrix[row[1]][col[x-1]].at(0);
-        for(int k=0;k<length;k++){
-            if(alphabet[x]==matrix[k][0].at(0)){
-                row[x]=k;
-            }
-            if(alphabet[x]==matrix[0][k].at(0)){
-                col[x]=k;
-            }
-        }
-    }
-}
+char matrix[9][9][9];
+map<char,int> total;
 int main(){
     int n;
     cin>>n;
@@ -63,16 +12,36 @@ int main(){
             cin>>matrix[i][j];
         }
     }
-    zero(n);
-    one(n);
-    other(n);
-    for(int i=0;i<n;i++)
-        cout<<alphabet[i];
-    cout<<endl;
-    for(int i=0;i<n;i++)
-        cout<<row[i];
-    cout<<endl;
-    for(int i=0;i<n;i++)
-        cout<<col[i];
-    cout<<endl;
+    for(int i=1;i<n;i++) {
+		total.insert(pair<char,int>(matrix[0][i][0],-1));
+	}
+	for(int i=1;i<n;i++) {
+		for(int j=1;j<n;j++) {
+			if(strlen(matrix[i][j])==1){
+				total[matrix[i][j][0]]+=1;
+			}
+		}
+	}
+
+    for(int i=1;i<n;i++){
+        for(int j=1;j<n;j++){
+            int sum=0;
+            if(strlen(matrix[i][j])==2){
+                sum=total[matrix[i][j][0]]*(n-1)+total[matrix[i][j][1]];
+            }else if(strlen(matrix[i][j])==1){
+                sum=total[matrix[i][j][0]];
+            }else{
+                std::cout<<"ERROR!"<<endl;
+                return 0;
+            }
+            if(sum!=total[matrix[i][0][0]]+total[matrix[0][j][0]]){
+                std::cout<<"ERROR!"<<endl;
+                return 0;
+            }
+        }
+    }
+    for(int i=1;i<n;i++)
+        std::cout<<matrix[0][i][0]<<"="<<total[matrix[0][i][0]]<<" ";
+    std::cout<<endl;
+    std::cout<<n-1<<endl;
 }
