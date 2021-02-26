@@ -1,34 +1,53 @@
 #include<iostream>
+#include<cstring>
 using namespace std;
-int s[40];
+unsigned long long f[41][41];
 int pos[8];
-long long decompose(int k){
-    long long produce=1;
-    long long digit[7];
-    for(int p=1;p<=k+1;p++){
-        long long temp=0;
-        for(int q=pos[p-1];q<=pos[p]-1;q++){
-            temp=temp*10+s[q];
-        }
-        digit[p-1]=temp;
-    }
-    for(int i=0;i<=k;i++)
-        produce*=digit[i];
-    return produce;
-}
-void dfs(int mul){
-    
+unsigned long long max_product=0;
 
+unsigned long long product(int k){
+    unsigned long long result=1;
+    for(int i=1;i<=k+1;i++)
+        result*=f[pos[i-1]+1][pos[i]];
+    return result;
+}
+void dfs(int depth,int k){
+    unsigned long long temp;
+    int original=pos[depth];//每次进入，都保存原始位置，返回时还原
+    if(depth>1){
+        dfs(depth-1,k);//本身不动，向下深搜
+        for(int i=pos[depth]+1;i<pos[depth+1];i++){
+            pos[depth]=i;//位置向后移
+            temp=product(k);
+            if(temp>max_product)
+                max_product=temp;
+            dfs(depth-1,k);//移动后再继续深搜
+        }
+    }else{
+        for(int i=pos[depth]+1;i<pos[depth+1];i++){
+            pos[depth]=i;//位置向后移
+            temp=product(k);
+            if(temp>max_product)
+                max_product=temp;
+        }
+    }
+    pos[depth]=original;
 } 
 int main(){
     int n,k;
+    memset(f,0,sizeof(f));
     cin>>n>>k;
     while(getchar()!='\n');
-    for(int i=0;i<n;i++)
-        s[i]=getchar()-'0';
-    for(int i=0;i<=k;i++)
+    for(int i=1;i<=n;i++)
+        f[i][i]=getchar()-'0';
+    for(int i=1;i<=n;i++){
+        for(int j=i+1;j<=n;j++)
+            f[i][j]=f[i][j-1]*10+f[j][j];
+    }
+    for(int i=1;i<=k;i++)
         pos[i]=i;//乘号初始位置
+    pos[0]=0;
     pos[k+1]=n;
-    cout<<decompose(k)<<endl;
-
+    dfs(k,k);
+    cout<<max_product<<endl;
 }
