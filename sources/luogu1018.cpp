@@ -4,16 +4,28 @@ using namespace std;
 class big_integer:public string{
     public:
     big_integer():string(){}
+    big_integer(int);
     big_integer(const string s):string(s){}
     big_integer(size_t length,char fill):string(length,fill){}
-    big_integer(const char s[]):string(s){}
+    big_integer(const char *s):string(s){}
     big_integer(const big_integer &x):string(x.data()){}
     big_integer &operator*(const big_integer&);
-    big_integer &operator=(unsigned long long);
     bool operator>(const big_integer&);
     big_integer &ltrim();
     big_integer substr(size_t,size_t);
 };
+big_integer::big_integer(int i):string(){
+    char temp;
+    while(i){
+        push_back(i%10+'0');
+        i/=10;
+    }
+    for(auto i=begin(),j=end()-1;i<j;i++,j--){
+        temp=*i;
+        *i=*j;
+        *j=temp;
+    }
+}
 big_integer &big_integer::operator*(const big_integer& multiplier){
     big_integer product(size()+multiplier.size(),'0');
     int carry;
@@ -32,19 +44,6 @@ big_integer &big_integer::operator*(const big_integer& multiplier){
     }
     product.ltrim();
     swap(product);
-    return *this;
-}
-big_integer &big_integer::operator=(unsigned long long i){
-    char temp;
-    while(i){
-        push_back(i%10+'0');
-        i/=10;
-    }
-    for(auto i=begin(),j=end();i<j;i++,j--){
-        temp=*i;
-        *i=*j;
-        *j=temp;
-    }
     return *this;
 }
 big_integer &big_integer::ltrim(){
@@ -87,8 +86,8 @@ big_integer big_integer::substr(size_t begin,size_t end){
     return big_integer(string::substr(begin,end-begin+1));
 }
 int pos[8];
-big_integer max_product=0ull;
-big_integer product(const big_integer &question,int k){
+big_integer max_product=0;
+big_integer product(big_integer &question,int k){
     big_integer result=1ull;
     for(int i=1;i<=k+1;i++)
         result=result*question.substr(pos[i-1]+1,pos[i]);
