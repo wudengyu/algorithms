@@ -9,7 +9,7 @@ class big_integer:public string{
     big_integer(size_t length,char fill):string(length,fill){}
     big_integer(const char *s):string(s){}
     big_integer(const big_integer &x):string(x.data()){}
-    big_integer &operator*(const big_integer&);
+    big_integer operator*(const big_integer&);
     bool operator>(const big_integer&);
     big_integer &ltrim();
     big_integer substr(size_t,size_t);
@@ -26,25 +26,25 @@ big_integer::big_integer(int i):string(){
         *j=temp;
     }
 }
-big_integer &big_integer::operator*(const big_integer& multiplier){
+big_integer big_integer::operator*(const big_integer& multiplier){
     big_integer product(size()+multiplier.size(),'0');
     int carry;
     string::const_reverse_iterator i;
     string::reverse_iterator j;
     for(i=multiplier.rbegin(),j=product.rbegin();i!=multiplier.rend();i++,j++){
         carry=0;
-        for(string::reverse_iterator k=rbegin(),l=j;k!=rend();k++,l++){
+        for(string::reverse_iterator k=rbegin(),l=j;;k++,l++){
+            if(k==rend()){
+                if(carry!=0)
+                    *l+=carry;
+                break;
+            }
             *l+=(*k-'0')*(*i-'0')+carry-'0';
             carry=*l/10;
             *l=*l%10+'0';
-            if(k==rend()&&carry!=0){
-                *(l+1)+=carry;
-            }
         }
     }
-    product.ltrim();
-    swap(product);
-    return *this;
+    return product.ltrim();
 }
 big_integer &big_integer::ltrim(){
     int count=0;
@@ -85,45 +85,28 @@ bool big_integer::operator>(const big_integer &b){
 big_integer big_integer::substr(size_t begin,size_t end){
     return big_integer(string::substr(begin,end-begin+1));
 }
-int pos[8];
+int n,k;
+big_integer f[41][41];
 big_integer max_product=0;
-big_integer product(big_integer &question,int k){
-    big_integer result=1ull;
-    for(int i=1;i<=k+1;i++)
-        result=result*question.substr(pos[i-1]+1,pos[i]);
-    return result;
-}
-/*
-void dfs(int depth,int k){
-    unsigned long long temp;
-    int original=pos[depth];//每次进入，都保存原始位置，返回时还原
-    if(depth>1){
-        dfs(depth-1,k);//本身不动，向下深搜
-        for(int i=pos[depth]+1;i<pos[depth+1];i++){
-            pos[depth]=i;//位置向后移
-            temp=product(k);
-            if(temp>max_product)
-                max_product=temp;
-            dfs(depth-1,k);//移动后再继续深搜
-        }
+void dfs(int num,big_integer product,int pos){
+    big_integer temp;
+    if(num==k){
+        temp=product*f[pos+1][n];
+        if(temp>max_product)
+            max_product=temp;
     }else{
-        for(int i=pos[depth]+1;i<pos[depth+1];i++){
-            pos[depth]=i;//位置向后移
-            temp=product(k);
-            if(temp>max_product)
-                max_product=temp;
+        for(int i=pos+1;i<=n-k+num;i++){
+            dfs(num+1,product*f[pos+1][i],i);
         }
     }
-    pos[depth]=original;
-} 
-*/
+}
 int main(){
-    int n,k;
     big_integer question;
     cin>>n>>k>>question;
-    for(int i=1;i<=k;i++)
-        pos[i]=i;//乘号初始位置
-    pos[0]=0;
-    pos[k+1]=n;
-    cout<<product(question,k)<<endl;
+    for(int i=1;i<=n;i++){
+        for(int j=i;j<=n;j++)
+            f[i][j]=question.substr(i-1,j-1);
+    }
+    dfs(0,1,0);
+    cout<<max_product<<endl;
 }
