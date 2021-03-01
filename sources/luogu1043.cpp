@@ -1,53 +1,47 @@
 #include<iostream>
-#include<limits>
+#include<cstring>
 using namespace std;
 unsigned long long min_v=(long long)(-1)>>(sizeof(unsigned long long)*8-1);
 unsigned long long max_v=0;
-int n,m,pre_sum=0;
-int s[50];
+int n,m;
+int data[50][50];
+unsigned long long dp_min[10][50][50],dp_max[10][50][50];
 int mod10(int v){
     while(v<0)v+=10;
     return v%10;
 }
-void dfs(int order,unsigned long long product,int last_pos){
-    int sum,tail;
-    unsigned long long temp;
-    for(int i=last_pos+1;i<n;i++){
-        sum=0;
-        for(int j=last_pos+1;j<=i;j++)
-            sum+=s[j];
-        if(order==1){
-            pre_sum=sum;
-            if(order!=m)
-                dfs(order+1,product,i);
-            else{
-                for(int j=i+1;j<n;j++)
-                    sum+=s[j];
-                max_v=mod10(sum);
-                min_v=max_v;
-                break;
-            }
-        }else if(order!=m){
-            dfs(order+1,product*mod10(sum),i);
-        }else{
-            tail=0;
-            for(int j=i+1;j<n;j++)
-                tail+=s[j];
-            tail+=pre_sum;
-            temp=product*mod10(sum)*mod10(tail);
-            if(temp<min_v)
-                min_v=temp;
-            if(temp>max_v)
-                max_v=temp;
-        }
-
-    }
-}
 int main(){
+    memset(data,0,sizeof(data));
+    memset(dp_min,0xff,sizeof(dp_min));
+    memset(dp_max,0,sizeof(dp_max));
     cin>>n>>m;
     for(int i=0;i<n;i++)
-        cin>>s[i];
-    dfs(1,1,-1);
-    cout<<min_v<<endl;
-    cout<<max_v<<endl;
+        cin>>data[i][i];
+    for(int i=0;i<n;i++){
+        data[i][i]=mod10(data[i][i]);
+        for(int j=i+1;j!=i;j++){
+            if(i==0&&j==n)
+                break;
+            else if(j==n){
+                j=0;
+                data[i][j]=mod10(data[i][n-1]+data[j][j]);
+            }else
+                data[i][j]=mod10(data[i][j-1]+data[j][j]);
+        }
+    }
+    for(int i=0;i<n;i++)
+        for(int j=0;j<n;j++)
+            dp_min[1][i][j]=dp_max[1][i][j]=data[i][j];//初始化，i,j之间分为1个部分时的积
+    for(int k=2;k<=m;k++){
+        for(int i=0;i<n-m+k;i++){
+            for(int j=i;j<n;j++){
+                dp_min[k][i][j]=dp_min[k-1][i][j]
+            }
+
+
+    }
+    
+            cout<<data[i][j]<<" ";
+        cout<<endl;
+    }
 }
