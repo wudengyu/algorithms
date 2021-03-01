@@ -32,16 +32,4 @@ int main(){
     for(int i=0;i<n;i++)
         for(int j=0;j<n;j++)
             dp_min[1][i][j]=dp_max[1][i][j]=data[i][j];//初始化，i,j之间分为1个部分时的积
-    for(int k=2;k<=m;k++){
-        for(int i=0;i<n-m+k;i++){
-            for(int j=i;j<n;j++){
-                dp_min[k][i][j]=dp_min[k-1][i][j]
-            }
-
-
-    }
-    
-            cout<<data[i][j]<<" ";
-        cout<<endl;
-    }
 }
