@@ -1,19 +1,34 @@
 #include<iostream>
 #include<cstring>
 using namespace std;
-unsigned long long min_v=(long long)(-1)>>(sizeof(unsigned long long)*8-1);
-unsigned long long max_v=0;
-int n,m;
+int min_v=0x7fffffff;
+int max_v=0;
+int n,m,start;
 int data[50][50];
-unsigned long long dp_min[10][50][50],dp_max[10][50][50];
 int mod10(int v){
     while(v<0)v+=10;
     return v%10;
 }
+void dfs(int depth,int product,int last_pos){
+    int temp;
+    if(depth==m){
+        for(int i=last_pos+1;i<n;i++){
+            if(start==0)
+                temp=product*data[last_pos][i-1]*data[i][n-1];
+            else
+                temp=product*data[last_pos][i-1]*data[i][start-1];
+            if(temp>max_v)
+                max_v=temp;
+            if(temp<min_v)
+                min_v=temp;
+        }
+    }else{
+        for(int i=last_pos+1;i<n;i++)
+            dfs(depth+1,product*data[last_pos][i-1],i);
+    }
+}
 int main(){
     memset(data,0,sizeof(data));
-    memset(dp_min,0xff,sizeof(dp_min));
-    memset(dp_max,0,sizeof(dp_max));
     cin>>n>>m;
     for(int i=0;i<n;i++)
         cin>>data[i][i];
@@ -29,7 +44,10 @@ int main(){
                 data[i][j]=mod10(data[i][j-1]+data[j][j]);
         }
     }
-    for(int i=0;i<n;i++)
-        for(int j=0;j<n;j++)
-            dp_min[1][i][j]=dp_max[1][i][j]=data[i][j];//初始化，i,j之间分为1个部分时的积
+    for(int i=0;i<n-m+1;i++){
+        start=i;
+        dfs(2,1,start);
+    }
+   cout<<min_v<<endl;
+   cout<<max_v<<endl;
 }
