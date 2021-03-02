@@ -4,49 +4,39 @@ using namespace std;
 int min_v=0x7fffffff;
 int max_v=0;
 int n,m,start;
-int data[50][50];
-int mod10(int v){
-    while(v<0)v+=10;
-    return v%10;
-}
-void dfs(int depth,int product,int last_pos){
-    int temp;
-    if(depth==m){
-        for(int i=last_pos+1;i<n;i++){
-            if(start==0)
-                temp=product*data[last_pos][i-1]*data[i][n-1];
-            else
-                temp=product*data[last_pos][i-1]*data[i][start-1];
-            if(temp>max_v)
-                max_v=temp;
-            if(temp<min_v)
-                min_v=temp;
-        }
-    }else{
-        for(int i=last_pos+1;i<n;i++)
-            dfs(depth+1,product*data[last_pos][i-1],i);
-    }
-}
+int d[101],dp1[101][101][10],dp2[100][100][10];
 int main(){
-    memset(data,0,sizeof(data));
+    //memset(data,0,sizeof(data));
     cin>>n>>m;
-    for(int i=0;i<n;i++)
-        cin>>data[i][i];
-    for(int i=0;i<n;i++){
-        data[i][i]=mod10(data[i][i]);
-        for(int j=i+1;j!=i;j++){
-            if(i==0&&j==n)
-                break;
-            else if(j==n){
-                j=0;
-                data[i][j]=mod10(data[i][n-1]+data[j][j]);
-            }else
-                data[i][j]=mod10(data[i][j-1]+data[j][j]);
+    for(int i=1;i<=n;i++){
+        cin>>d[i];
+        d[n+i]=d[i];
+    }
+    d[0]=0;
+    n*=2;
+    for(int i=2;i<n;i++)
+        d[i]+=d[i-1];
+    for(int i=1;i<n;i++)
+        for(int j=i;j<n;j++)
+            dp1[i][j][1]=dp2[i][j][1]=((d[j]-d[i-1])%10+10)%10;
+    for(int t=2;t<=m;t++){
+        for(int i=1;i<=n;i++){
+            for(int j=i+t-1;j<=n;j++){
+                dp1[i][j][t]=2147483647;
+                for(int k=i+t-1;k<=j;k++)
+                {
+                    int temp=((d[j]-d[k-1])%10+10)%10;
+                    dp1[i][j][t]=min(dp1[i][j][t],dp1[i][k-1][t-1]*temp);
+                    dp2[i][j][t]=max(dp2[i][j][t],dp2[i][k-1][t-1]*temp);
+                }
+            }
         }
     }
-    for(int i=0;i<n-m+1;i++){
-        start=i;
-        dfs(2,1,start);
+    n/=2;
+    for(int i=1;i<=n;i++)
+    {
+        max_v=max(dp2[i][i+n-1][m],max_v);
+        min_v=min(dp1[i][i+n-1][m],min_v);
     }
    cout<<min_v<<endl;
    cout<<max_v<<endl;
