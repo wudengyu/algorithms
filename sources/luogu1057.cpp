@@ -1,20 +1,15 @@
 #include<iostream>
+#include<cstring>
 using namespace std;
-int n,m,ans=0;
-void dfs(int k,int pos){
-    if(k==m){
-        if(pos==1)
-            ans++;
-        return;
-    }
-    if((pos>n/2+1?n+1-pos:pos-1)>k){
-        return;
-    }
-    dfs(k+1,pos==n?1:pos+1);
-    dfs(k+1,pos==1?n:pos-1);
-}
+int n,m;
+int a[31][31];
 int main(){
+    int temp,ans=0;
+    memset(a,0,sizeof(a));
     cin>>n>>m;
-    dfs(0,1);
-    cout<<ans<<endl;
+    a[0][1]=1;
+    for(int i=1;i<=m;i++)
+        for(int j=0;j<n;j++)
+            a[i][j]+=a[i-1][(j-1+n)%n]+a[i-1][(j+1)%n];
+    cout<<a[m][1]<<endl;
 }
