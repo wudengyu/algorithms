@@ -8,113 +8,75 @@
 */
 
 #include <iostream>
-#include <cstring>
-#include <list>
-#include <stack>
 #include <queue>
-#include <set>
-#include <limits>
+#include <cstring>
 
 using namespace std;
 const int N=200,M=5000;
-struct edge{
-    int from;//剩余网络需要逆向边
+struct{
     int to;
     int next=0;
-    unsigned int capacity;
-    unsigned int flow = 0; //流
-}edges[M+1];
-int adj[N+1];//邻接边，每个顶点的第一条边的编号；
-/*
-void update(int s, int t, unsigned int cf)
-{
+    unsigned int capacity;//残余流量
+}e[2*(M+1)];//从2开始，偶数保存正向边，奇数保存反向边，这样就可以用xor 1快速找到反向边
+int head[N+1];//每个顶点的第一条边的编号
+int path[N+1];//到达顶点的边
+//int marked[N+1];
+void update(int s,int t,unsigned int cf){
     int current = t;
-    while (current != s)
-    {
-        if (path[current]->original)
-        {
-            path[current]->capacity -= cf;
-            path[current]->flow += cf;
-            path[current]->rev->capacity = path[current]->flow;
-            path[current]->rev->flow = 0;
-        }
-        else
-        {
-            path[current]->rev->capacity += cf;
-            path[current]->rev->flow -= cf;
-            path[current]->capacity = path[current]->rev->flow;
-            path[current]->flow = 0;
-        }
-        current = path[current]->from;
+    while (current!=s){
+        int p=path[current];
+        e[p].capacity-=cf;
+        e[p^1].capacity+=cf;
+        current=e[p^1].to;
     }
 }
-unsigned int bfs(int s, int t)
-{
-    unsigned int cf = 1 << 31; //残余流量
+int bfs(int s, int t){
+    unsigned int cf[N+1]; //当前寻路过程中，到达顶点的最小残余流量
     queue<int> q;
-    int marked[N + 1];
-    memset(path, 0, sizeof(list<edge>::iterator) * (N + 1));
-    memset(marked, 0, sizeof(int) * (N + 1));
-    marked[s] = 1;
+    //memset(marked,0,(N+1)*sizeof(int));
+    int marked[N+1]={};
+    marked[s]=1;
+    cf[s]=2147483648;
     q.push(s);
-    if (s == t)
+    if (s==t)
         return 0;
-    while (!q.empty() && marked[t] == 0)
-    {
-        int current = q.front();
+    while (!q.empty()&&marked[t]==0){
+        int current=q.front();
         q.pop();
-        for (auto p = graph[current].begin(); p != graph[current].end(); p++)
-        {
-            if (marked[p->to] == 0 && p->capacity > 0)
-            {
-                marked[p->to] = 1;
-                path[p->to] = p;
-                q.push(p->to);
-                if (cf > p->capacity)
-                    cf = p->capacity;
+        for (int p=head[current];p!=0;p=e[p].next){
+            if (marked[e[p].to]==0&&e[p].capacity>0){
+                marked[e[p].to]=1;
+                path[e[p].to]=p;
+                cf[e[p].to]=min(cf[current],e[p].capacity);
+                q.push(e[p].to);
             }
         }
     }
-    if (marked[t] == 1)
-    {
-        update(s, t, cf);
-        return cf;
-    }
-    else
+    if(marked[t]==1){
+        update(s,t,cf[t]);
+        return 1;
+    }else
         return 0;
 }
-*/
 int main(){
     int n,m,s,t,u,v,w;
-    unsigned long long maxflow = 0;
+    unsigned long long maxflow=0;
     scanf("%d%d%d%d",&n,&m,&s,&t);
-    for (int i=1;i<=m;i++){
-        cin >> u >> v >> w;
+    for (int i=2;i<=2*m;i+=2){
         scanf("%d%d%d",&u,&v,&w);
-        edges[i].from=u;
-        edges[i].to=v;
-        edges[i].capacity=w;
-        edges[i].next=adj[u];
-        adj[u]=i;
+        e[i].to=v;
+        e[i].capacity=w;
+        e[i].next=head[u];
+        head[u]=i;
+        e[i^1].to=u;
+        e[i^1].capacity=0;
+        e[i^1].next=head[v];
+        head[v]=i^1;
     }
-}
-    /*
-    while (bfs(s, t))
-        ;
-    for (auto p = graph[s].begin(); p != graph[s].end(); p++)
-    {
-        maxflow += p->flow;
+    while(bfs(s,t)!=0);
+    for(int p=head[t];p!=0;p=e[p].next){
+        if(p%2==1)
+            maxflow+=e[p].capacity;
     }
     cout << maxflow << endl;
-    */
-    /*
-    for(int i=1;i<=n;i++){
-        if(!graph[i].empty()){
-            for(auto p=graph[i].begin();p!=graph[i].end();p++){
-                cout<<"("<<p->from<<","<<p->to<<")=["<<p->capacity<<","<<p->flow<<"] ";
-                cout<<"|"<<p->rev->from<<","<<p->rev->to<<"| ";
-            }
-            cout<<endl;
-        }
-    }
-    */
+}
