@@ -12,151 +12,139 @@
 */
 #include<iostream>
 #include<cstring>
-#include<vector>
 #include<queue>
-#include<stack>
-#include<map>
-#include<utility>
-#include<set>
-#include<list>
-#include<forward_list>
-#include<limits>
+
 using namespace std;
 const int N=500,M=100000;
-struct egde{
+struct edge{
     int from;
     int to;
     int cost;
     int capacity=__INT_MAX__;//容量
-    egde *next=NULL;//下一条边
-    egde *reverse=NULL;//反向边
+    edge *next=NULL;//下一条边
+    edge *reverse=NULL;//反向边
 }e[M*2+N*(N+1)];//原始边可能有M条，每两台路由器之间可能拆出n(n+1)/2条，再加上每条边的反向边；
-int tail;//边表的队尾索引
-egde *graph[2*N+1];//1台路由器可能需要拆成2个点；
+int tail;//边表的尾后索引
+edge *graph[2*N+1];//1台路由器可能需要拆成2个点；N+i对应i拆分出来的点
 int vomit[N+1];//路由器的吞吐量
-int marked[2*N+1];
+int marked[N+1];
 long long dist[N+1];
 struct comp{
-    bool operator()(const egde* a,const egde* b){
-        return dist[a->to]>dist[b->to];
+    bool operator()(const int a,const int b){
+        return dist[a]>dist[b];
     }
 };
-void add_egde(int from,int to,int cost){
+void add_twowayedge(int from,int to,int cost){
     e[tail].from=from;
     e[tail].to=to;
     e[tail].cost=cost;
     e[tail].next=graph[from];
     graph[from]=&e[tail];
     tail++;
+    e[tail].from=to;
+    e[tail].to=from;
+    e[tail].cost=cost;
+    e[tail].next=graph[to];
+    graph[to]=&e[tail];
+    e[tail-1].reverse=&e[tail];
+    e[tail].reverse=&e[tail-1];
+    tail++;
 }
 void Dijkstra(int begin){
-    priority_queue<egde*,vector<egde*>,comp> pq;
+    priority_queue<int,vector<int>,comp> pq;
     dist[begin]=0;
-    for(auto p=graph[begin];p!=NULL;p=p->next){
-        dist[p->to]=p->cost;
-        pq.push(p);
-    }
+    pq.push(begin);
     while(!pq.empty()){
-        egde *current=pq.top();
+        int current=pq.top();
         pq.pop();
-        for(auto p=graph[current->to];p!=NULL;p=p->next){
+        for(auto p=graph[current];p!=NULL;p=p->next){
             if(dist[p->from]+p->cost<dist[p->to]){
                 dist[p->to]=dist[p->from]+p->cost;
-                pq.push(p);
+                pq.push(p->to);
             }
         }
     }
 }
-void residual(int begin){//广度优先遍历，构造初始的残存网络
-    queue<egde*> q;
-    for(auto p=graph[begin];p!=NULL;p=p->next){
-        q.push(p);
-    }
+//广度优先遍历，初始化残存网络，同时标记最短路径上的顶点
+void residual(int begin){
+    queue<int> q;
+    q.push(begin);
+    memset(marked,0,sizeof(int)*(N+1));
     while(!q.empty()){
-        egde *current=q.front();
+        int current=q.front();
         q.pop();
-        for(auto p=graph[current->to];p!=NULL;p=p->next){
+        for(auto p=graph[current];p!=NULL;p=p->next){
             if(dist[p->from]+p->cost==dist[p->to]){
-                add_egde(p->to,p->from,__INT_MAX__);
-                e[tail].reverse=p;
-                p->reverse=&e[tail];
-                q.push(p);
-            }else
+                p->capacity=1000000000;
+                marked[p->to]=1;
+                q.push(p->to);
+            }else{
                 p->capacity=0;
-        }
-    }
-
-}
-/*
-void splitvertex(int s,int t,int length){
-    for(int i=1;i<=length;i++){
-        if(i!=s&&i!=t){//除了起点和终点
-            graph[length+i].adjoin.swap(graph[i].adjoin);
-            for(auto p=graph[length+i].adjoin.begin();p!=graph[length+i].adjoin.end();p++){
-                p->from=length+i;
             }
-            graph[i].adjoin.push_front(egde(i,length+i,0,vomit[i]));
-            graph[length+i].adjoin.push_front(egde(length+i,i,false));
-            graph[i].adjoin.begin()->rev=graph[length+i].adjoin.begin();
-            graph[length+i].adjoin.begin()->rev=graph[i].adjoin.begin();
         }
     }
-
 }
-void update(int s,int t,int cf){
+/*拆分之前标记的在最短路径上的点*/
+void splitvertex(int begin,int end){
+    for(int i=2;i<end;i++){
+        if(marked[i]){
+            for(auto p=graph[i];p!=NULL;p=p->next)
+                p->from=i+N;
+            graph[i+N]=graph[i];
+            graph[i]=NULL;
+            add_twowayedge(i,i+N,0);
+            graph[i]->capacity=vomit[i];
+            graph[i+N]->capacity=0;
+        }
+    }
+}
+/*延路径调整残余流量*/
+void update(int s,int t,edge *path[],int cf){
     int current=t;
     while(current!=s){
-        if(path[current]->original){
-            path[current]->capacity-=cf;
-            path[current]->flow+=cf;
-            path[current]->rev->capacity=path[current]->flow;
-            path[current]->rev->flow=0;
-        }else{
-            path[current]->rev->capacity+=cf;
-            path[current]->rev->flow-=cf;
-            path[current]->capacity=path[current]->rev->flow;
-            path[current]->flow=0;
-        }
+        path[current]->capacity-=cf;
+        path[current]->reverse->capacity+=cf;
         current=path[current]->from;
     }
 }
-int bfs(int s,int t){
-    queue<int> q;
-    int cf=1e9;//残存容量
-    memset(marked,0,sizeof(int)*(2*N+1));
-    memset(path,0,sizeof(list<egde>::iterator)*(2*N+1));
+/*基本的Ford-Fulkerson算法*/
+int maxflow(int s,int t){
+    int cf[2*N+1]; //当前寻路过程中，到达顶点的最小残余流量
+    edge* path[2*N+1];//到达节点的边的指针
+    int marked[2*N+1]={};
+    cf[s]=1000000000;
     marked[s]=1;
+    queue<int> q;
     q.push(s);
+    if(s==t)
+        return 0;
     while(!q.empty()&&marked[t]==0){
         int current=q.front();
         q.pop();
-        for(auto p=graph[current].adjoin.begin();p!=graph[current].adjoin.end();p++){
-            if(p->capacity>0&&marked[p->to]==0){
+        for(auto p=graph[current];p!=NULL;p=p->next){
+            if(marked[p->to]==0&&p->capacity>0){
                 marked[p->to]=1;
                 path[p->to]=p;
+                cf[p->to]=min(cf[current],p->capacity);
                 q.push(p->to);
-                if(cf>p->capacity)
-                    cf=p->capacity;
-
             }
         }
     }
     if(marked[t]==1){
-        update(s,t,cf);
-        return cf;
+        update(s,t,path,cf[t]);
+        return 1;
     }else
         return 0;
 }
-*/
 int main(){
     int n,m;
     int v,w,c;
-    tail=0;//边表的队尾索引
-    unsigned long long maxflow=0;
+    tail=0;//边表的尾后索引
+    unsigned long long ans=0;
     cin>>n>>m;
     for(int i=0;i<m;i++){
         cin>>v>>w>>c;
-        add_egde(v,w,c);
+        add_twowayedge(v,w,c);
     }
     for(int i=1;i<=n;i++){
         cin>>vomit[i];
@@ -164,26 +152,10 @@ int main(){
     }
     Dijkstra(1);
     residual(1);
+    splitvertex(1,n);
+    maxflow(1,n);
     for(int i=0;i<tail;i++){
         cout<<e[i].from<<" "<<e[i].to<<" "<<e[i].cost<<" "<<e[i].capacity<<endl;
     }
     cout<<endl;
-    /*
-    splitvertex(1,n,n);
-    while(bfs(1,n));
-    for(auto p=graph[1].adjoin.begin();p!=graph[1].adjoin.end();p++){
-        maxflow+=p->flow;
-    }
-    cout<<maxflow<<endl;
-    */
-    /*
-    for(int i=1;i<2*N+1;i++){
-        if(!graph[i].adjoin.empty()){
-            for(auto e=graph[i].adjoin.begin();e!=graph[i].adjoin.end();e++){
-                cout<<"("<<e->from<<","<<e->to<<")={"<<e->capacity<<","<<e->flow<<"} ";
-            }
-            cout<<endl;
-        }
-    }
-    */
 }
