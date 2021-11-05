@@ -16,38 +16,29 @@
 
 using namespace std;
 const int N=500,M=100000;
+const long long inf=__LONG_LONG_MAX__;
 struct edge{
     int from;
     int to;
-    int cost;
-    int capacity=__INT_MAX__;//容量
-    edge *next=NULL;//下一条边
-    edge *reverse=NULL;//反向边
-}e[M*2+N*(N+1)];//原始边可能有M条，每两台路由器之间可能拆出n(n+1)/2条，再加上每条边的反向边；
+    long long value;
+    int next=0;//下一条边
+}original[M],e[(M+N+2)*2];//原始边可能有M条，每台路由器之间可能拆出1条，再加反向边乘2；
 int tail;//边表的尾后索引
-edge *graph[2*N+1];//1台路由器可能需要拆成2个点；N+i对应i拆分出来的点
+int head[2*(N+1)];//1台路由器可能需要拆成2个点；N+i对应i拆分出来的点
 int vomit[N+1];//路由器的吞吐量
-int marked[N+1];
 long long dist[N+1];
+long long ans;
 struct comp{
     bool operator()(const int a,const int b){
         return dist[a]>dist[b];
     }
 };
-void add_twowayedge(int from,int to,int cost){
+void add_edge(int from,int to,long long value){
     e[tail].from=from;
     e[tail].to=to;
-    e[tail].cost=cost;
-    e[tail].next=graph[from];
-    graph[from]=&e[tail];
-    tail++;
-    e[tail].from=to;
-    e[tail].to=from;
-    e[tail].cost=cost;
-    e[tail].next=graph[to];
-    graph[to]=&e[tail];
-    e[tail-1].reverse=&e[tail];
-    e[tail].reverse=&e[tail-1];
+    e[tail].value=value;
+    e[tail].next=head[from];
+    head[from]=tail;
     tail++;
 }
 void Dijkstra(int begin){
@@ -57,62 +48,30 @@ void Dijkstra(int begin){
     while(!pq.empty()){
         int current=pq.top();
         pq.pop();
-        for(auto p=graph[current];p!=NULL;p=p->next){
-            if(dist[p->from]+p->cost<dist[p->to]){
-                dist[p->to]=dist[p->from]+p->cost;
-                pq.push(p->to);
+        for(auto p=head[current];p!=0;p=e[p].next){
+            if(dist[e[p].from]+e[p].value<dist[e[p].to]){
+                dist[e[p].to]=dist[e[p].from]+e[p].value;
+                pq.push(e[p].to);
             }
-        }
-    }
-}
-//广度优先遍历，初始化残存网络，同时标记最短路径上的顶点
-void residual(int begin){
-    queue<int> q;
-    q.push(begin);
-    memset(marked,0,sizeof(int)*(N+1));
-    while(!q.empty()){
-        int current=q.front();
-        q.pop();
-        for(auto p=graph[current];p!=NULL;p=p->next){
-            if(dist[p->from]+p->cost==dist[p->to]){
-                p->capacity=1000000000;
-                marked[p->to]=1;
-                q.push(p->to);
-            }else{
-                p->capacity=0;
-            }
-        }
-    }
-}
-/*拆分之前标记的在最短路径上的点*/
-void splitvertex(int begin,int end){
-    for(int i=2;i<end;i++){
-        if(marked[i]){
-            for(auto p=graph[i];p!=NULL;p=p->next)
-                p->from=i+N;
-            graph[i+N]=graph[i];
-            graph[i]=NULL;
-            add_twowayedge(i,i+N,0);
-            graph[i]->capacity=vomit[i];
-            graph[i+N]->capacity=0;
         }
     }
 }
 /*延路径调整残余流量*/
-void update(int s,int t,edge *path[],int cf){
+void update(int s,int t,int path[],int cf){
     int current=t;
     while(current!=s){
-        path[current]->capacity-=cf;
-        path[current]->reverse->capacity+=cf;
-        current=path[current]->from;
+        e[path[current]].value-=cf;
+        e[path[current]^1].value+=cf;
+        current=e[path[current]].from;
     }
+    ans+=cf;
 }
 /*基本的Ford-Fulkerson算法*/
 int maxflow(int s,int t){
-    int cf[2*N+1]; //当前寻路过程中，到达顶点的最小残余流量
-    edge* path[2*N+1];//到达节点的边的指针
-    int marked[2*N+1]={};
-    cf[s]=1000000000;
+    long long cf[2*(N+1)]={}; //当前寻路过程中，到达顶点的最小残余流量
+    int path[2*(N+1)]={};//到达节点的边的指针
+    int marked[2*(N+1)]={};
+    cf[s]=inf;
     marked[s]=1;
     queue<int> q;
     q.push(s);
@@ -121,12 +80,12 @@ int maxflow(int s,int t){
     while(!q.empty()&&marked[t]==0){
         int current=q.front();
         q.pop();
-        for(auto p=graph[current];p!=NULL;p=p->next){
-            if(marked[p->to]==0&&p->capacity>0){
-                marked[p->to]=1;
-                path[p->to]=p;
-                cf[p->to]=min(cf[current],p->capacity);
-                q.push(p->to);
+        for(auto p=head[current];p!=0;p=e[p].next){
+            if(marked[e[p].to]==0&&e[p].value>0){
+                marked[e[p].to]=1;
+                path[e[p].to]=p;
+                cf[e[p].to]=min(cf[current],e[p].value);
+                q.push(e[p].to);
             }
         }
     }
@@ -139,23 +98,58 @@ int maxflow(int s,int t){
 int main(){
     int n,m;
     int v,w,c;
-    tail=0;//边表的尾后索引
-    unsigned long long ans=0;
+    tail=1;//边表的尾后索引
+    ans=0;
     cin>>n>>m;
     for(int i=0;i<m;i++){
         cin>>v>>w>>c;
-        add_twowayedge(v,w,c);
+        original[i].from=v;
+        original[i].to=w;
+        original[i].value=c;
+        add_edge(v,w,c);
+        add_edge(w,v,c);
     }
     for(int i=1;i<=n;i++){
         cin>>vomit[i];
-        dist[i]=__LONG_LONG_MAX__;//顺便把dist初始化了
+        dist[i]=inf;//顺便把dist初始化了
     }
     Dijkstra(1);
-    residual(1);
-    splitvertex(1,n);
-    maxflow(1,n);
-    for(int i=0;i<tail;i++){
-        cout<<e[i].from<<" "<<e[i].to<<" "<<e[i].cost<<" "<<e[i].capacity<<endl;
+    //清除原图
+    for(int i=1;i<=n;i++)
+        head[i]=0;
+    tail=2;//重置边表索引，从2开始，一对一对的重建
+    /*每一条在最短路上的原始边，从镜像点连到入点，再连一条反向边，但1和n不拆，需要特判*/
+    for(int i=0;i<m;i++){
+        if(dist[original[i].from]+original[i].value==dist[original[i].to]){
+            if(original[i].from==1){
+                add_edge(original[i].from,original[i].to,inf);
+                add_edge(original[i].to,original[i].from,0);
+            }else{
+                add_edge(original[i].from+n,original[i].to,inf);
+                add_edge(original[i].to,original[i].from+n,0);
+            }
+        }
+        if(dist[original[i].to]+original[i].value==dist[original[i].from]){
+            if(original[i].to==1){
+                add_edge(original[i].to,original[i].from,inf);
+                add_edge(original[i].from,original[i].to,0);
+            }else{
+                add_edge(original[i].to+n,original[i].from,inf);
+                add_edge(original[i].from,original[i].to+n,0);
+            }
+        }
+    }
+    /*把顶点及其镜像连起来*/
+    for(int i=2;i<n;i++){
+        add_edge(i,i+n,vomit[i]);
+        add_edge(i+n,i,0);
+    }
+    while(maxflow(1,n));
+    cout<<ans<<endl;
+    /*
+    for(int i=2;i<tail;i++){
+        cout<<e[i].from<<" "<<e[i].to<<" "<<e[i].value<<endl;
     }
     cout<<endl;
+    */
 }
