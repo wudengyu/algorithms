@@ -10,73 +10,113 @@
 #include <iostream>
 #include <queue>
 #include <cstring>
-
 using namespace std;
-const int N=200,M=5000;
-struct{
-    int to;
-    int next=0;
-    unsigned int capacity;//残余流量
-}e[2*(M+1)];//从2开始，偶数保存正向边，奇数保存反向边，这样就可以用xor 1快速找到反向边
-int head[N+1];//每个顶点的第一条边的编号
-int path[N+1];//到达顶点的边
-//int marked[N+1];
-void update(int s,int t,unsigned int cf){
-    int current = t;
-    while (current!=s){
-        int p=path[current];
-        e[p].capacity-=cf;
-        e[p^1].capacity+=cf;
-        current=e[p^1].to;
+class flowedge{
+    int m_v;
+    int m_w;
+    int m_capacity;
+    int m_flow=0;
+    public:
+    void set(int v,int w,int capacity){
+        m_v=v;
+        m_w=w;
+        m_capacity=capacity;
     }
-}
-int bfs(int s, int t){
-    unsigned int cf[N+1]; //当前寻路过程中，到达顶点的最小残余流量
+    int from(){return m_v;}
+    int to(){return m_w;}
+    int other(int vertex){
+        if(vertex==m_v)
+            return m_w;
+        else if(vertex==m_w)
+            return m_v;
+        else
+            throw "vertex is error!";
+    }
+    int flow(){return m_flow;}
+    int residualCapacityTo(int vertex){
+        if(vertex==m_v)
+            return m_flow;
+        else if(vertex==m_w)
+            return m_capacity-m_flow;
+        else
+            throw "vertex is error!";
+    }
+    void addResidualFlowTo(int vertex,int delta){
+        if(vertex==m_v)
+            m_flow-=delta;
+        else if(vertex==m_w)
+            m_flow+=delta;
+        else
+            throw "vertex is error!";
+    } 
+};
+class flowgraph{
+    int m_v;
+    int m_e;
+    int m_tail=0;
+    flowedge *m_allEdge;
+    vector<flowedge *> *m_adj;
+    public:
+    flowgraph(int v,int e){
+        m_adj=new vector<flowedge *>[v+1];
+        m_allEdge=new flowedge[e];
+    }
+    ~flowgraph(){
+        delete[] m_adj;
+        delete[] m_allEdge;
+    }
+    void add_edge(int start,int target,int value){
+        m_allEdge[m_tail].set(start,target,value);
+        m_adj[start].push_back(m_allEdge+m_tail);
+        m_adj[target].push_back(m_allEdge+m_tail);
+        m_tail++;
+    }
+    vector<flowedge *> &adj(int vertex){
+        return *(m_adj+vertex);
+    }
+};
+const int N=200,M=5000;
+bool marked[N+1];
+int cf[N+1];
+flowedge* edgeTo[N+1];
+unsigned long long maxflow=0;
+bool hasAugmentingPath(flowgraph &g,int s,int t){
     queue<int> q;
-    //memset(marked,0,(N+1)*sizeof(int));
-    int marked[N+1]={};
-    marked[s]=1;
-    cf[s]=2147483648;
     q.push(s);
-    if (s==t)
-        return 0;
-    while (!q.empty()&&marked[t]==0){
+    memset(marked,0,sizeof(marked));
+    marked[s]=true;
+    cf[s]=__INT_MAX__;
+    while(!q.empty()&&!marked[t]){
         int current=q.front();
         q.pop();
-        for (int p=head[current];p!=0;p=e[p].next){
-            if (marked[e[p].to]==0&&e[p].capacity>0){
-                marked[e[p].to]=1;
-                path[e[p].to]=p;
-                cf[e[p].to]=min(cf[current],e[p].capacity);
-                q.push(e[p].to);
+        for(auto v:g.adj(current)){
+            int w=v->other(current);
+            if(!marked[w]&&v->residualCapacityTo(w)){
+                q.push(w);
+                edgeTo[w]=v;
+                marked[w]=true;
+                cf[w]=min(cf[current],v->residualCapacityTo(w));
             }
         }
     }
-    if(marked[t]==1){
-        update(s,t,cf[t]);
-        return 1;
-    }else
-        return 0;
+    return marked[t];
+}
+void FordFulkerson(flowgraph &g,int s,int t){
+    while(hasAugmentingPath(g,s,t)){
+        for(int v=t;v!=s;v=edgeTo[v]->other(v)){
+            edgeTo[v]->addResidualFlowTo(v,cf[t]);
+        }
+        maxflow+=cf[t];
+    }
 }
 int main(){
     int n,m,s,t,u,v,w;
-    unsigned long long maxflow=0;
-    scanf("%d%d%d%d",&n,&m,&s,&t);
-    for (int i=2;i<=2*m;i+=2){
-        scanf("%d%d%d",&u,&v,&w);
-        e[i].to=v;
-        e[i].capacity=w;
-        e[i].next=head[u];
-        head[u]=i;
-        e[i^1].to=u;
-        e[i^1].capacity=0;
-        e[i^1].next=head[v];
-        head[v]=i^1;
+    cin>>n>>m>>s>>t;
+    flowgraph g(n,m);
+    for (int i=0;i<m;i++){
+        cin>>u>>v>>w;
+        g.add_edge(u,v,w);
     }
-    while(bfs(s,t)!=0);
-    for(int p=head[t];p!=0;p=e[p].next){
-        if(p%2==1)
-            maxflow+=e[p].capacity;
-    }
-    cout << maxflow << endl;
+    FordFulkerson(g,s,t);
+    cout<<maxflow<<endl;
 }
